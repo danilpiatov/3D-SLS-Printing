@@ -26,14 +26,13 @@ Obj3DModel::Obj3DModel()
 
 std::vector<Line> Obj3DModel::slice(double z) {
     std::vector<Line> lines;
-    double max = 0;
     for (stl::Triangle t: model_.triangles){
         std::vector<double> zs {t.v1.z,
                                 t.v2.z,
                                 t.v3.z };
         if (*std::min_element(zs.begin(), zs.end()) < z && *std::max_element(zs.begin(), zs.end()) > z) {
-            if (t.v1.z < z ^ t.v2.z < z ){
-                if (t.v1.z < z ^ t.v3.z < z ) {
+            if ((t.v1.z < z) ^ (t.v2.z < z) ){
+                if ((t.v1.z < z) ^ (t.v3.z < z) ) {
                     lines.push_back(Line({intersection(t.v1, t.v2, z),
                                           intersection(t.v1, t.v3, z),
                                           false }));
@@ -50,7 +49,6 @@ std::vector<Line> Obj3DModel::slice(double z) {
                                       false}));
             }
             if (std::abs(lines.back().a.x-lines.back().b.x)> 3){
-                max = std::abs(lines.back().a.x-lines.back().b.x);
             }
         }
     }
