@@ -13,7 +13,6 @@ polygons_({})
 
 void Polygons::polygonize(std::vector<Line> &lines, int startLineIndex) {
     polygon p;
-    double width = 0.01;
     int index = startLineIndex;
     int maxRight;
     int maxLeft;
@@ -57,9 +56,6 @@ void Polygons::polygonize(std::vector<Line> &lines, int startLineIndex) {
         }
         int i = 0;
         int closest = 0;
-        double minX = 1;
-        double minY = 1;
-        bool isA = true;
         while (i < lines.size()){
             if(!lines[i].polygonized && /*
                 if(std::abs(lines[i].a.x - p.vertices.back().x) < minX){
@@ -291,13 +287,10 @@ std::list<Point> Polygons::findLines(double width) {
         bool clockwise = p.vertices[1].x > p.vertices[p.vertices.size() - 2].x;
         int level = 0;
         while (up - width * (level + 1) + width/2 > p.vertices[0].z) {
-            double zz = up - width * (level + 1) + width/2;
             ++level;
         }
         int i = 0;
         while (i < p.vertices.size() - 1) {
-            double z1 = p.vertices[i].z;
-            double z2 = p.vertices[i + 1].z;
             if (goingDown ^ (p.vertices[i].z > p.vertices[i + 1].z)) {
                 if (goingDown) {
                     level--;

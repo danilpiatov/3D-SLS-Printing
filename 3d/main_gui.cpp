@@ -30,7 +30,6 @@ int main(int argc, char* argv[]) {
     SliceWindow window;
     window.set_default_size(1500,900);
 
-       int id = 0;
        auto app = Gtk::Application::create("danilpiatov");
 
        Gtk::Main::run(window);

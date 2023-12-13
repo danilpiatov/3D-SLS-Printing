@@ -12,7 +12,7 @@ namespace stl {
         return vertex({*(float *) (triangle), *(float *) (triangle + 4), *(float *) (triangle + 8)});
     }
 
-    stlFile parseSTL(std::string path) {
+    stlFile parseSTL(const std::string& path) {
         std::ifstream file(path.c_str(), std::ios::in | std::ios::binary);
 
         if (!file) {
@@ -26,7 +26,6 @@ namespace stl {
         char num_triangles[4];
         file.read(header, 80);
         file.read(num_triangles, 4);
-        unsigned int num = * (unsigned int *) num_triangles;
         stlFile data;
         data.header = std::string(header);
         data.num_triangles = * (unsigned int *) num_triangles;

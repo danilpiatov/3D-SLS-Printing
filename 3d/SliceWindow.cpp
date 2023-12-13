@@ -132,7 +132,6 @@ void SliceWindow::on_button_start_clicked() {
     minNum_ = curNum_;
     if (maxNum_ > -1) {
         Point startPoint = Point{startX, startY};
-        int tmp = curNum_;
         double width = model_.findRightPoint() - model_.findLeftPoint();
         double height = model_.findClosePoint() - model_.findFarPoint();
         double x = model_.findLeftPoint() + width/2;

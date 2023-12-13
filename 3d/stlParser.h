@@ -27,7 +27,7 @@ namespace stl {
         std::vector<Triangle> triangles;
     };
 
-    stlFile parseSTL(std::string path);
+    stlFile parseSTL(const std::string& path);
 
     vertex parseVec(std::ifstream & file);
 }

@@ -20,7 +20,6 @@ bool MyArea::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
 
     double r = 0, g = 1, b = 0;
     cr->set_source_rgb(r, g, b);
-    int aa = 0;
   //  for(auto l: lines){
   //      cr->move_to(xc + coef*l.a.x, yc - coef * l.a.z);
    //     cr->line_to(xc + coef*l.b.x, yc - coef * l.b.z);
@@ -40,7 +39,6 @@ bool MyArea::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
     cr->set_line_cap(Cairo::LINE_CAP_ROUND);
     std::cout << "start";
     if(polygons_.getPolygons().size() > 0) {
-        double up = polygons_.getPolygons()[0].vertices[0].z;
         bool line = false;
         cr->move_to(xc + coef_ * (startPoints_[curLayer_].x - center_.x), yc - coef_ * (startPoints_[curLayer_].z - center_.z));
         for (Point p: route_) {
