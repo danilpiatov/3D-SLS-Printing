@@ -20,7 +20,8 @@ Point intersection(vertex a, vertex b, double z){
     return Point({x ,y});
 }
 
-Obj3DModel::Obj3DModel()
+Obj3DModel::Obj3DModel() :
+  model_( {"", 0, {}}
 {
 }
 
