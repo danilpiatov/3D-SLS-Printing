@@ -11,11 +11,9 @@ namespace stl {
     vertex parseVec(std::ifstream & file) {
         char triangle[12];
         file.read(triangle, 12);
-        vertex v;
-        std::memcpy(&v.x, &triangle[0], 4);
-        std::memcpy(&v.y, &triangle[4], 4);
-        std::memcpy(&v.z, &triangle[8], 4);
-        return v;
+        return vertex({*reinterpret_cast<float*>(triangle),
+                       *reinterpret_cast<float*>(triangle + 4),
+                       *reinterpret_cast<float*>(triangle + 8)});
     }
 
     stlFile parseSTL(const std::string& path) {
@@ -34,7 +32,7 @@ namespace stl {
         file.read(num_triangles, 4);
         stlFile data;
         data.header = std::string(header);
-        std::memcpy(&data.num_triangles, &num_triangles[0], 4);
+        data.num_triangles = *reinterpret_cast<int*>(num_triangles);
 
         for ( int i = 0; i < data.num_triangles; i++) {
             std::ignore = parseVec(file);
