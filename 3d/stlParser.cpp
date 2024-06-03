@@ -5,12 +5,17 @@
 #include "stlParser.h"
 #include <cassert>
 #include <tuple>
+#include <cstring>
 
 namespace stl {
     vertex parseVec(std::ifstream & file) {
         char triangle[12];
         file.read(triangle, 12);
-        return vertex({*(float *) (triangle), *(float *) (triangle + 4), *(float *) (triangle + 8)});
+        vertex v;
+        std::memcpy(&v.x, &triangle[0], 4);
+        std::memcpy(&v.y, &triangle[4], 4);
+        std::memcpy(&v.z, &triangle[8], 4);
+        return v;
     }
 
     stlFile parseSTL(const std::string& path) {
@@ -29,7 +34,7 @@ namespace stl {
         file.read(num_triangles, 4);
         stlFile data;
         data.header = std::string(header);
-        data.num_triangles = * (int *) num_triangles;
+        std::memcpy(&data.num_triangles, &num_triangles[0], 4);
 
         for ( int i = 0; i < data.num_triangles; i++) {
             std::ignore = parseVec(file);

@@ -108,7 +108,7 @@ bool Polygons::isEq(double x, double y) {
 }
 
 void Polygons::isOuter(polygon & polygon) {
-    for (size_t i = polygons_.size() - 1; i >= 0; --i) {
+    for (int i = polygons_.size() - 1; i >= 0; --i) {
         bool out = true;
         if(isEq(polygon.vertices[0].x, polygons_[i].vertices[0].x) && isEq(polygon.vertices[0].z, polygons_[i].vertices[0].z)){
             continue;
