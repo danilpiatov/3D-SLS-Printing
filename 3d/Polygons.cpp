@@ -21,31 +21,12 @@ void Polygons::polygonize(std::vector<Line> &lines, int startLineIndex) {
     while(true){
         lines[index].polygonized = true;
         if(p.vertices.size() > 0){
-            /*
-            if(std::abs(p.vertices.back().x - lines[index].a.x) < width && std::abs((--(--p.vertices.end()))->x - lines[index].a.x) < width){
-                if (std::abs(p.vertices.back().z - lines[index].a.z)> 0.01){
-                    p.vertices.back().z = lines[index].a.z;
-                }
-            }
-            else if(std::abs(p.vertices.back().z - lines[index].a.z) < width && std::abs((--(--p.vertices.end()))->z - lines[index].a.z)< width){
-                if (std::abs(p.vertices.back().x - lines[index].a.x) > width){
-                    p.vertices.back().x = lines[index].a.x;
-                }
-            }
-            else if (!(std::abs(p.vertices.back().z - lines[index].a.z) < width && std::abs(p.vertices.back().x - lines[index].a.x) < width) &&
-            !(isEq(lines[index].b.x, p.vertices.front().x) &&
-              isEq(lines[index].b.z, p.vertices.front().z) &&
-                      (std::abs(p.vertices.back().z - lines[index].a.z) < width &&
-              std::abs(p.vertices.front().z - lines[index].a.z)< width) ||
-                     (std::abs(p.vertices.back().x - lines[index].a.x) < width &&
-                      std::abs(p.vertices.front().x - lines[index].a.x)< width))) {*/
             if(isEq(lines[index].a.x, p.vertices.back().x) && isEq(lines[index].a.z, p.vertices.back().z)) {
                 p.vertices.push_back(lines[index].b);
             }
             else{
                 p.vertices.push_back(lines[index].a);
             }
-            //}
         }
         else{
             p.vertices.push_back(lines[index].a);
@@ -55,36 +36,8 @@ void Polygons::polygonize(std::vector<Line> &lines, int startLineIndex) {
             maxDown = maxUp;
         }
         int i = 0;
-        int closest = 0;
         while (i < lines.size()){
-            if(!lines[i].polygonized && /*
-                if(std::abs(lines[i].a.x - p.vertices.back().x) < minX){
-                    minX = std::abs(lines[i].a.x - p.vertices.back().x);
-                    closest = i;
-                    isA=true;
-                }else if(std::abs(lines[i].a.x - p.vertices.back().x) == minX && std::abs(lines[i].a.z - p.vertices.back().z) < minY){
-                    minY = std::abs(lines[i].a.z - p.vertices.back().z);
-                    closest = i;
-                }
-
-                if(std::abs(lines[i].b.x - p.vertices.back().x) < minX){
-                    minX = std::abs(lines[i].b.x - p.vertices.back().x);
-                    closest = i;
-                }else if(std::abs(lines[i].b.x - p.vertices.back().x) == minX && std::abs(lines[i].b.z - p.vertices.back().z) < minY){
-                    minY = std::abs(lines[i].b.z - p.vertices.back().z);
-                    closest = i;
-                }
-                ++i;
-            }
-            */
-
-
-             //  ((isEq(lines[i].b.x, lines[index].a.x) && isEq(lines[i].b.z , lines[index].a.z)) ||
-             //  (isEq(lines[i].a.x, lines[index].b.x) && isEq(lines[i].a.z , lines[index].b.z)) ||
-              //  (isEq(lines[i].a.x , lines[index].a.x) && isEq(lines[i].a.z , lines[index].a.z) &&
-              //   (!isEq(lines[i].b.x , lines[index].b.x) || !isEq(lines[i].b.z , lines[index].b.z))) ||
-              //   (isEq(lines[i].b.x , lines[index].b.x) && isEq(lines[i].b.z , lines[index].b.z) &&
-              //   (!isEq(lines[i].a.x , lines[index].a.x) || !isEq(lines[i].a.z , lines[index].a.z)))
+            if(!lines[i].polygonized && 
              ( isEq(lines[i].a.x, p.vertices.back().x) && isEq(lines[i].a.z, p.vertices.back().z) ||
                     isEq(lines[i].b.x, p.vertices.back().x) && isEq(lines[i].b.z, p.vertices.back().z))){
                 index = i;
@@ -185,90 +138,6 @@ void Polygons::isOuter(polygon & polygon) {
     return;
 }
 
-/*
-std::vector<Line> Polygons::decomposite() {
-    for(polygon p : polygons_){
-        if (p.outer){
-            for (int i = 1; i < p.vertices.size() - 1; ++i){
-
-            }
-        }
-
-    }
-    return std::vector<Line>();
-}
-
-std::vector<Point> Polygons::inner() {
-    std::cout << "Hello";
-    std::vector<Point> points;
-    for(polygon p : polygons_) {
-        if (p.outer ^ ((++p.vertices.begin())->x < p.vertices.back().x)) {
-            auto it0 = p.vertices.begin();
-            auto it = p.vertices.begin();
-            auto it2 = ++p.vertices.begin();
-            it++;
-            it2++;
-            while (it2 != p.vertices.end()){
-                if ((it2->x - it0->x)*(it->z - it0->z) -
-                    (it->x - it0->x)*(it2->z - it0->z) < -0.0001 )
-                {
-                    points.emplace_back(*it);
-                }
-                it0++;
-                it++;
-                it2++;
-            }
-            if (((++p.vertices.begin())->x - it0->x)*(it->z - it0->z) -
-                (it->x - it0->x)*((++p.vertices.begin())->z - it0->z) > 0.0001 )
-            {
-                points.emplace_back(*it);
-            }
-        }
-        else{
-            auto it0 = p.vertices.begin();
-            auto it = p.vertices.begin();
-            auto it2 = ++p.vertices.begin();
-            it++;
-            it2++;
-            while (it2 != p.vertices.end()){
-                if ((it2->x - it0->x)*(it->z - it0->z) -
-                    (it->x - it0->x)*(it2->z - it0->z) > 0.0001 )
-                {
-                    points.emplace_back(*it);
-                }
-                it0++;
-                it++;
-                it2++;
-            }
-            if (((++p.vertices.begin())->x - it0->x)*(it->z - it0->z) -
-                (it->x - it0->x)*((++p.vertices.begin())->z - it0->z) > 0.0001 )
-            {
-                points.emplace_back(*it);
-            }
-        }
-    }
-    return points;
-}
-
-Polygons::intersectionData Polygons::intersection(std::list<Point>::iterator innerPoint, int polNum) {
-    Point x = *innerPoint;
-    if (innerPoint == polygons_[polNum].vertices.begin()){
-        innerPoint = --polygons_[polNum].vertices.end();
-    }
-    Point a = *(--innerPoint);
-    Point b;
-    ++innerPoint;
-    if (innerPoint == --polygons_[polNum].vertices.end()){
-        b = *(++polygons_[polNum].vertices.begin());
-    }
-    else
-    {
-        b = *(++innerPoint);
-    }
-
-
-}*/
-
 std::list<Point> Polygons::findLines(double width) {
     double up = polygons_[0].vertices[polygons_[0].uEdge].z;
     double down = polygons_[0].vertices[polygons_[0].dEdge].z;
@@ -349,8 +218,6 @@ std::list<Point> Polygons::findLines(double width) {
             }
         }
     }
- // bool left = true;
-  //  auto closest = findClosest(points, Point{0, 100}, left);
     return points;
 }
 
@@ -413,13 +280,7 @@ std::list<Point>::iterator Polygons::findClosest(std::list<Point>& list, Point p
 
 void Polygons::polygonizeAll(std::vector<Line> &lines) {
     while (!allLinesPolygonized(lines)){
-        // std::cout << "ALARM!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
         polygonize(lines, findUpperUnpolygonizedLine(lines));
-//        if (!(isEq(polygons_.back().vertices.back().x, polygons_.back().vertices.front().x) &&
-  //            isEq(polygons_.back().vertices.back().z, polygons_.back().vertices.front().z)))
-    //        polygons_.back().vertices.emplace_back(polygons_.back().vertices.front());
-        // std::cout << polygons_[0].vertices.size();
-        // std::cout << lines.size();
     }
 
     for (polygon &p : polygons_) {
@@ -478,9 +339,4 @@ Point Polygons::getCenter() {
     Point point = {left + this->getWidth()/2, down + this->getHeight()/2};
     return point;
 }
-
-
-
-
-
 

@@ -44,16 +44,15 @@ protected:
     virtual bool on_draw(const Cairo::RefPtr<Cairo::Context>& cr);
 private:
     Polygons polygons_;
-    double width_;
-    double height_;
-   // std::vector<std::vector<Point>> vertices_;
-    std::vector<Point> route_;
-    int curLayer_;
-    std::vector<Point> startPoints_;
-    double laserWidth_;
+    double width_ = 0;
+    double height_ = 0;
+    std::vector<Point> route_ = {};
+    int curLayer_ = 0;
+    std::vector<Point> startPoints_ = {};
+    double laserWidth_ = 0;
     bool realLaserWidth_ = false;
-    double coef_;
-    Point center_;
+    double coef_ = 0;
+    Point center_ = {0,0};
 };
 
 

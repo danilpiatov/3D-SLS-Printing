@@ -43,8 +43,6 @@ namespace stl {
 
         std::cout << "Found " << data.num_triangles << " triangles. Parsing complete!" << std::endl;
 
-//        assert((file.peek(), file.eof()));
-
         return data;
     }
 }
