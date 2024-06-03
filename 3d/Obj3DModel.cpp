@@ -21,7 +21,7 @@ Point intersection(vertex a, vertex b, double z){
 }
 
 Obj3DModel::Obj3DModel() :
-  model_( {"", 0, {}}
+  model_( {"", 0, {}})
 {
 }
 

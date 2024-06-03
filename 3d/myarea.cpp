@@ -15,19 +15,12 @@ bool MyArea::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
     yc = height / 2;
 
     cr->set_line_width(1.0);
-   // cr->move_to(xc, yc);
-   // cr->line_to(xc + startPoint_.x, yc - startPoint_.z);
 
     double r = 0, g = 1, b = 0;
     cr->set_source_rgb(r, g, b);
-  //  for(auto l: lines){
-  //      cr->move_to(xc + coef*l.a.x, yc - coef * l.a.z);
-   //     cr->line_to(xc + coef*l.b.x, yc - coef * l.b.z);
-    //}
    for (polygon polygon: polygons_.getPolygons()) {
         cr->move_to(xc + coef_ * (polygon.vertices.front().x - center_.x), yc - coef_ * (polygon.vertices.front().z - center_.z));
         for (auto vertex: polygon.vertices) {
-            //std::cout << vertex.x << vertex.z << "\n";
             cr->line_to(xc + coef_ * (vertex.x - center_.x), yc - coef_ * (vertex.z - center_.z));
         }
         cr->stroke();
@@ -55,9 +48,6 @@ bool MyArea::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
             cr->move_to(xc + coef_ * (p.x - center_.x), yc - coef_ * (p.z - center_.z));
         }
     }
-//    Point p = polygons_.intersect(++polygons_.getPolygons()[0].vertices.begin(), --(--polygons_.getPolygons()[0].vertices.end()),
-    //                                polygons_.getPolygons()[0].vertices);
-    //  std::cout << "\n" <<p.x << " " << p.z;
 
     cr->stroke();
     return true;
@@ -81,7 +71,16 @@ void MyArea::create(Polygons &polygons, Point & startPoint, double laserWidth, d
     }
 }
 
-MyArea::MyArea()
+MyArea::MyArea() :
+  width_(0),
+  height_(0),
+  route_({}),
+  curLayer_(0),
+  startPoints_({}),
+  laserWidth_(0),
+  realLaserWidth_(false),
+  coef_(0),
+  center_({0,0})
 {}
 
 void MyArea::change(Polygons &polygons) {
