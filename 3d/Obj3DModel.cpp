@@ -10,7 +10,7 @@
 #include <algorithm>
 
 
-Point intersection(vertex a, vertex b, double z){
+Point intersection(const vertex& a, const vertex& b, double z){
     double xLen = std::abs(a.x-b.x);
     double yLen = std::abs(a.y-b.y);
     double zLen = std::abs(a.z - b.z);
