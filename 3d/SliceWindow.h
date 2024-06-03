@@ -18,7 +18,7 @@
 class SliceWindow : public Gtk::Window
 {
 public:
-    SliceWindow();
+    SliceWindow();  
     virtual ~SliceWindow();
 protected:
 //Signal handlers:

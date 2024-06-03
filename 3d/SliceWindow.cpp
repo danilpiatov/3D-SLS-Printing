@@ -6,19 +6,19 @@
 
 SliceWindow::SliceWindow() :
         hBoxMain(false, 10),
+        labelScale("Scale"),
         labelModelPath("Path to model"),
         entryModelPath(),
         labelSliceNum("Slice num"),
         entrySliceNum(),
         labelLaserWidth("Laser width"),
         entryLaserWidth(),
-        buttonStart("Start"),
         labelStartPointX("Start point"),
+        buttonStart("Start"),
         buttonNext("Next"),
         buttonPrev("Prev"),
         buttonPlus("+"),
-        buttonMinus("-"),
-        labelScale("Scale")
+        buttonMinus("-")
         {
     set_title("SLS 3D printing app");
     set_border_width(0);

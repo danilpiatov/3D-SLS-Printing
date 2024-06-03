@@ -11,8 +11,6 @@
 class MyArea2 : public Gtk::DrawingArea
 {
 public:
-    MyArea2();
-    virtual ~MyArea2();
 
 protected:
     //Override default signal handler:

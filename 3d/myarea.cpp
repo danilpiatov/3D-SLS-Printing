@@ -1,9 +1,6 @@
 #include "myarea.h"
 #include <cairomm/context.h>
 
-MyArea::~MyArea()
-{
-}
 bool MyArea::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
     Gtk::Allocation allocation = get_allocation();
     const int width = allocation.get_width();
@@ -70,18 +67,6 @@ void MyArea::create(Polygons &polygons, Point & startPoint, double laserWidth, d
         route_ = polygons_.findRoute(laserWidth_, startPoints_[0]);
     }
 }
-
-MyArea::MyArea() :
-  width_(0),
-  height_(0),
-  route_({}),
-  curLayer_(0),
-  startPoints_({}),
-  laserWidth_(0),
-  realLaserWidth_(false),
-  coef_(0),
-  center_({0,0})
-{}
 
 void MyArea::change(Polygons &polygons) {
     if(!polygons.getPolygons().empty()) {

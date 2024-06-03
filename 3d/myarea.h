@@ -13,8 +13,6 @@
 class MyArea : public Gtk::DrawingArea {
 
 public:
-
-    MyArea();
     void create(Polygons & polygons, Point & startPoint, double laserWidth, double width, double height, Point center);
     void change(Polygons & polygons);
     void prev(Polygons & polygons);
@@ -34,8 +32,6 @@ public:
     void moveDown(){
         center_.z--;
     }
-
-    virtual ~MyArea();
 
 protected:
 

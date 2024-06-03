@@ -5,13 +5,6 @@
 #include "MyArea2.h"
 #include <cairomm/context.h>
 
-MyArea2::MyArea2()
-{
-}
-
-MyArea2::~MyArea2()
-{
-}
 
 bool MyArea2::on_draw(const Cairo::RefPtr<Cairo::Context>& cr)
 {

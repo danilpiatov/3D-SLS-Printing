@@ -4,6 +4,7 @@
 
 #include "stlParser.h"
 #include <cassert>
+#include <tuple>
 
 namespace stl {
     vertex parseVec(std::ifstream & file) {
@@ -28,10 +29,10 @@ namespace stl {
         file.read(num_triangles, 4);
         stlFile data;
         data.header = std::string(header);
-        data.num_triangles = * (unsigned int *) num_triangles;
+        data.num_triangles = * (int *) num_triangles;
 
-        for (unsigned int i = 0; i < data.num_triangles; i++) {
-            vertex normal = parseVec(file);
+        for ( int i = 0; i < data.num_triangles; i++) {
+            std::ignore = parseVec(file);
             vertex v1 = parseVec(file);
             vertex v2 = parseVec(file);
             vertex v3 = parseVec(file);

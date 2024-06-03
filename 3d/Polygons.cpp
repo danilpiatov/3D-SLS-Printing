@@ -14,10 +14,10 @@ polygons_({})
 void Polygons::polygonize(std::vector<Line> &lines, int startLineIndex) {
     polygon p;
     int index = startLineIndex;
-    int maxRight;
-    int maxLeft;
-    int maxUp;
-    int maxDown;
+    int maxRight=0;
+    int maxLeft=0;
+    int maxUp=0;
+    int maxDown=0;
     while(true){
         lines[index].polygonized = true;
         if(p.vertices.size() > 0){
@@ -35,11 +35,11 @@ void Polygons::polygonize(std::vector<Line> &lines, int startLineIndex) {
             maxRight = maxUp;
             maxDown = maxUp;
         }
-        int i = 0;
+        size_t i = 0;
         while (i < lines.size()){
             if(!lines[i].polygonized && 
-             ( isEq(lines[i].a.x, p.vertices.back().x) && isEq(lines[i].a.z, p.vertices.back().z) ||
-                    isEq(lines[i].b.x, p.vertices.back().x) && isEq(lines[i].b.z, p.vertices.back().z))){
+             ( (isEq(lines[i].a.x, p.vertices.back().x) && isEq(lines[i].a.z, p.vertices.back().z)) ||
+                    (isEq(lines[i].b.x, p.vertices.back().x) && isEq(lines[i].b.z, p.vertices.back().z)))){
                 index = i;
                 break;
             }
@@ -84,14 +84,14 @@ bool Polygons::allLinesPolygonized(std::vector<Line> &lines) {
 
 int Polygons::findUpperUnpolygonizedLine(std::vector<Line> &lines) {
     int maxZIndex = 0;
-    int i;
+    size_t i;
     for(i = 0; i < lines.size(); i++) {
         if (!lines[i].polygonized) {
             maxZIndex = i;
             break;
         }
     }
-    for(int j = i; j < lines.size(); j++){
+    for(size_t j = i; j < lines.size(); j++){
         if(!lines[j].polygonized && (lines[j].a.z > lines[maxZIndex].a.z)){
             maxZIndex = j;
         }
@@ -108,13 +108,13 @@ bool Polygons::isEq(double x, double y) {
 }
 
 void Polygons::isOuter(polygon & polygon) {
-    for (int i = polygons_.size() - 1; i >= 0; --i) {
+    for (size_t i = polygons_.size() - 1; i >= 0; --i) {
         bool out = true;
         if(isEq(polygon.vertices[0].x, polygons_[i].vertices[0].x) && isEq(polygon.vertices[0].z, polygons_[i].vertices[0].z)){
             continue;
         }
 
-        for (int j = 0; j < polygons_[i].vertices.size() - 1; ++j){
+        for (size_t j = 0; j < polygons_[i].vertices.size() - 1; ++j){
             if (polygon.vertices[polygon.uEdge].x < std::max(polygons_[i].vertices[j].x, polygons_[i].vertices[j + 1].x) &&
                 polygon.vertices[polygon.uEdge].z > std::min(polygons_[i].vertices[j].z, polygons_[i].vertices[j + 1].z) &&
                 polygon.vertices[polygon.uEdge].z < std::max(polygons_[i].vertices[j].z, polygons_[i].vertices[j + 1].z) &&
@@ -143,7 +143,7 @@ std::list<Point> Polygons::findLines(double width) {
     double down = polygons_[0].vertices[polygons_[0].dEdge].z;
     std::vector<std::vector<double>> lefts;
     std::vector<std::vector<double>> rights;
-    for (int i = 1; i < polygons_.size(); ++i){
+    for (size_t i = 1; i < polygons_.size(); ++i){
         if(polygons_[i].vertices[polygons_[i].uEdge].z > up){
             up = polygons_[i].vertices[polygons_[i].uEdge].z;
         }
@@ -154,11 +154,11 @@ std::list<Point> Polygons::findLines(double width) {
     for (polygon p: polygons_) {
         bool goingDown = true;
         bool clockwise = p.vertices[1].x > p.vertices[p.vertices.size() - 2].x;
-        int level = 0;
+        size_t level = 0;
         while (up - width * (level + 1) + width/2 > p.vertices[0].z) {
             ++level;
         }
-        int i = 0;
+        size_t i = 0;
         while (i < p.vertices.size() - 1) {
             if (goingDown ^ (p.vertices[i].z > p.vertices[i + 1].z)) {
                 if (goingDown) {
@@ -208,10 +208,10 @@ std::list<Point> Polygons::findLines(double width) {
         }
     }
     std::list<Point> points;
-    for (int i = 0; i < lefts.size(); ++i){
+    for (size_t i = 0; i < lefts.size(); ++i){
         std::sort(lefts[i].begin(), lefts[i].end());
         std::sort(rights[i].begin(), rights[i].end());
-        for (int j = 0; j < lefts[i].size(); ++j){
+        for (size_t j = 0; j < lefts[i].size(); ++j){
             if (lefts[i][j] < rights[i][j]) {
                 points.emplace_back(Point{lefts[i][j], up - width * (i + 1) + width / 2});
                 points.emplace_back(Point{rights[i][j], up - width * (i + 1) + width / 2});
@@ -279,6 +279,9 @@ std::list<Point>::iterator Polygons::findClosest(std::list<Point>& list, Point p
 }
 
 void Polygons::polygonizeAll(std::vector<Line> &lines) {
+    if (lines.empty()){
+        return;
+    }
     while (!allLinesPolygonized(lines)){
         polygonize(lines, findUpperUnpolygonizedLine(lines));
     }
@@ -294,7 +297,7 @@ double Polygons::getWidth() {
     }
     double left = polygons_[0].vertices[polygons_[0].lEdge].x;
     double right = polygons_[0].vertices[polygons_[0].rEdge].x;
-    for(int i = 1; i < polygons_.size();++i){
+    for(size_t i = 1; i < polygons_.size();++i){
         if(polygons_[i].vertices[polygons_[i].lEdge].x < left){
             left = polygons_[i].vertices[polygons_[i].lEdge].x;
         }
@@ -311,7 +314,7 @@ double Polygons::getHeight() {
     }
     double up = polygons_[0].vertices[polygons_[0].uEdge].z;
     double down = polygons_[0].vertices[polygons_[0].dEdge].z;
-    for(int i = 1; i < polygons_.size();++i){
+    for(size_t i = 1; i < polygons_.size();++i){
         if(polygons_[i].vertices[polygons_[i].dEdge].z < down){
             down = polygons_[i].vertices[polygons_[i].dEdge].z;
         }
@@ -328,7 +331,7 @@ Point Polygons::getCenter() {
     }
     double left = polygons_[0].vertices[polygons_[0].lEdge].x;
     double down = polygons_[0].vertices[polygons_[0].dEdge].z;
-    for(int i = 1; i < polygons_.size();++i){
+    for(size_t i = 1; i < polygons_.size();++i){
         if(polygons_[i].vertices[polygons_[i].dEdge].z < down){
             down = polygons_[i].vertices[polygons_[i].dEdge].z;
         }
