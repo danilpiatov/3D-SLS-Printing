@@ -15,7 +15,7 @@
 #include <fstream>
 #include <gtkmm-3.0/gtkmm.h>
 #include "myarea.h"
-#include "loginWindow.h"
+//#include "loginWindow.h"
 #include "SliceWindow.h"
 #include "Polygons.h"
 

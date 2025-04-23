@@ -29,6 +29,7 @@ private:
     void polygonize(std::vector<Line> & lines, int startLineIndex);
     bool isEq(double x, double y);
     std::vector<polygon> polygons_;
+    std::vector<Line> lines_;
     void isOuter(polygon & polygon);
 };
 

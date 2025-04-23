@@ -37,7 +37,7 @@ void Polygons::polygonize(std::vector<Line> &lines, int startLineIndex) {
         }
         size_t i = 0;
         while (i < lines.size()){
-            if(!lines[i].polygonized && 
+            if(!lines[i].polygonized &&
              ( (isEq(lines[i].a.x, p.vertices.back().x) && isEq(lines[i].a.z, p.vertices.back().z)) ||
                     (isEq(lines[i].b.x, p.vertices.back().x) && isEq(lines[i].b.z, p.vertices.back().z)))){
                 index = i;
@@ -138,88 +138,115 @@ void Polygons::isOuter(polygon & polygon) {
     return;
 }
 
-std::list<Point> Polygons::findLines(double width) {
-    double up = polygons_[0].vertices[polygons_[0].uEdge].z;
-    double down = polygons_[0].vertices[polygons_[0].dEdge].z;
-    std::vector<std::vector<double>> lefts;
-    std::vector<std::vector<double>> rights;
-    for (size_t i = 1; i < polygons_.size(); ++i){
-        if(polygons_[i].vertices[polygons_[i].uEdge].z > up){
-            up = polygons_[i].vertices[polygons_[i].uEdge].z;
-        }
-        if(polygons_[i].vertices[polygons_[i].dEdge].z < down){
-            down = polygons_[i].vertices[polygons_[i].dEdge].z;
-        }
-    }
-    for (polygon p: polygons_) {
-        bool goingDown = true;
-        bool clockwise = p.vertices[1].x > p.vertices[p.vertices.size() - 2].x;
-        size_t level = 0;
-        while (up - width * (level + 1) + width/2 > p.vertices[0].z) {
-            ++level;
-        }
-        size_t i = 0;
-        while (i < p.vertices.size() - 1) {
-            if (goingDown ^ (p.vertices[i].z > p.vertices[i + 1].z)) {
-                if (goingDown) {
-                    level--;
-                } else {
-                    level++;
-                }
+static constexpr double EPS = 1e-9;
 
-                goingDown = !goingDown;
-            }
-            double x = (p.outer ^ (goingDown ^ clockwise)) ? -1 * width / 2 : width / 2;
-            while (lefts.size() < level + 1){
-                lefts.emplace_back(std::vector<double>());
-                rights.emplace_back(std::vector<double>());
-            }
-            if (goingDown) {
-                if (p.vertices[i + 1].z >= up - width * (level + 1) + width / 2) {
-                    ++i;
-                    continue;
-                } else {
-                    if(x>0) {
-                        lefts[level].emplace_back(
-                                xIntersect(up - width * (level + 1) + width / 2, p.vertices[i], p.vertices[i + 1]) + x);
-                    }
-                    else{
-                        rights[level].emplace_back(
-                                xIntersect(up - width * (level + 1) + width / 2, p.vertices[i], p.vertices[i + 1]) + x);
-                    }
-                }
-                level++;
-            } else {
-                if (p.vertices[i + 1].z <= up - width * (level + 1) + width / 2) {
-                    ++i;
-                    continue;
-                } else {
-                    if(x>0) {
-                        lefts[level].emplace_back(
-                                xIntersect(up - width * (level + 1) + width / 2, p.vertices[i], p.vertices[i + 1]) + x);
-                    }
-                    else{
-                        rights[level].emplace_back(
-                                xIntersect(up - width * (level + 1) + width / 2, p.vertices[i], p.vertices[i + 1]) + x);
-                    }
-                }
-                level--;
+// Вспомогательная функция: заполняет пропуски между отрезками
+static std::list<Point> fillGaps(const std::list<Point>& pts, double width) {
+    const double gapThreshold = width * 1.5;
+    std::list<Point> result;
+    auto it = pts.begin();
+    while (it != pts.end()) {
+        Point p1 = *it;
+        ++it;
+        if (it == pts.end()) break;
+        Point p2 = *it;
+        ++it;
+        // копируем исходный сегмент
+        result.push_back(p1);
+        result.push_back(p2);
+        // смотрим на начало следующего сегмента
+        if (it != pts.end()) {
+            Point q1 = *it;
+            double dx = q1.x - p2.x;
+            double dz = q1.z - p2.z;
+            double dist = std::hypot(dx, dz);
+            if (dist > gapThreshold) {
+                // мостик
+                result.push_back(p2);
+                result.push_back(q1);
             }
         }
     }
-    std::list<Point> points;
-    for (size_t i = 0; i < lefts.size(); ++i){
-        std::sort(lefts[i].begin(), lefts[i].end());
-        std::sort(rights[i].begin(), rights[i].end());
-        for (size_t j = 0; j < lefts[i].size(); ++j){
-            if (lefts[i][j] < rights[i][j]) {
-                points.emplace_back(Point{lefts[i][j], up - width * (i + 1) + width / 2});
-                points.emplace_back(Point{rights[i][j], up - width * (i + 1) + width / 2});
-            }
-        }
-    }
-    return points;
+    return result;
 }
+
+// Улучшённый findLines: адаптивная заливка по локальному направлению контура каждого полигона
+// Возвращает std::list<Point> с парами точек начала и конца каждого сегмента
+std::list<Point> Polygons::findLines(double width) {
+    std::list<Point> pts;
+    for (auto &poly : polygons_) {
+        const auto &V = poly.vertices;
+        size_t nV = V.size();
+        if (nV < 3) continue;
+
+        // 1. Основное направление (упрощённый PCA)
+        double sumX = 0, sumZ = 0;
+        for (size_t i = 0; i + 1 < nV; ++i) {
+            sumX += V[i+1].x - V[i].x;
+            sumZ += V[i+1].z - V[i].z;
+        }
+        double theta = std::atan2(sumZ, sumX);
+        double cth = std::cos(-theta), sth = std::sin(-theta);
+
+        // 2. Ротация контура относительно локальной оси
+        std::vector<Point> RV(nV);
+        for (size_t i = 0; i < nV; ++i) {
+            double x = V[i].x, z = V[i].z;
+            RV[i].x = x * cth - z * sth;
+            RV[i].z = x * sth + z * cth;
+        }
+
+        // 3. Границы по RV.z
+        double minZ = 1e18, maxZ = -1e18;
+        for (auto &p : RV) {
+            minZ = std::min(minZ, p.z);
+            maxZ = std::max(maxZ, p.z);
+        }
+        size_t levels = static_cast<size_t>(std::ceil((maxZ - minZ) / width));
+
+        // 4. Сканирование уровней для заливки
+        for (size_t lvl = 0; lvl < levels; ++lvl) {
+            double scanZ = minZ + (lvl + 0.5) * width;
+            std::vector<double> L, R;
+            for (size_t i = 0; i + 1 < nV; ++i) {
+                auto &A = RV[i], &B = RV[i+1];
+                if (std::abs(B.z - A.z) < EPS) continue;
+                if (scanZ < std::min(A.z, B.z) || scanZ > std::max(A.z, B.z)) continue;
+                double t = (scanZ - A.z) / (B.z - A.z);
+                double xi = A.x + t * (B.x - A.x);
+                double offset = poly.outer ? -width / 2 : width / 2;
+                double xl = xi + offset;
+                double xr = xi - offset;
+                if (xl < xr) {
+                    L.push_back(xl);
+                    R.push_back(xr);
+                } else {
+                    L.push_back(xr);
+                    R.push_back(xl);
+                }
+            }
+            if (L.size() != R.size()) continue;
+            std::sort(L.begin(), L.end());
+            std::sort(R.begin(), R.end());
+            // Добавляем пары точек в список
+            for (size_t j = 0; j < L.size(); ++j) {
+                double l = L[j], r = R[j];
+                if (r - l >= 2 * width) {
+                    Point p1{ l * cth + scanZ * sth, -l * sth + scanZ * cth };
+                    Point p2{ r * cth + scanZ * sth, -r * sth + scanZ * cth };
+                    pts.push_back(p1);
+                    pts.push_back(p2);
+                } else {
+                    double mid = 0.5 * (l + r);
+                    Point pm{ mid * cth + scanZ * sth, -mid * sth + scanZ * cth };
+                    pts.push_back(pm);
+                }
+            }
+        }
+    }
+    return pts;
+}
+
 
 double Polygons::xIntersect(double z,  Point a, Point b) {
     Point min;
