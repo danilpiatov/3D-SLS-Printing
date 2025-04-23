@@ -5,7 +5,7 @@
 #include <cmath>
 #include <algorithm>
 #include "Polygons.h"
-
+#include "clipper.hpp"
 
 Polygons::Polygons():
 polygons_({})
@@ -140,55 +140,60 @@ void Polygons::isOuter(polygon & polygon) {
 
 static constexpr double EPS = 1e-9;
 
-// Вспомогательная функция: заполняет пропуски между отрезками
-static std::list<Point> fillGaps(const std::list<Point>& pts, double width) {
-    const double gapThreshold = width * 1.5;
-    std::list<Point> result;
-    auto it = pts.begin();
-    while (it != pts.end()) {
-        Point p1 = *it;
-        ++it;
-        if (it == pts.end()) break;
-        Point p2 = *it;
-        ++it;
-        // копируем исходный сегмент
-        result.push_back(p1);
-        result.push_back(p2);
-        // смотрим на начало следующего сегмента
-        if (it != pts.end()) {
-            Point q1 = *it;
-            double dx = q1.x - p2.x;
-            double dz = q1.z - p2.z;
-            double dist = std::hypot(dx, dz);
-            if (dist > gapThreshold) {
-                // мостик
-                result.push_back(p2);
-                result.push_back(q1);
-            }
-        }
-    }
-    return result;
+/// Преобразования Point <-> Clipper
+static ClipperLib::Path toClipperPath(const std::vector<Point>& poly) {
+    ClipperLib::Path p; p.reserve(poly.size());
+    const double SCALE = 1e5;
+    for (auto &pt : poly)
+        p.emplace_back((long)std::llround(pt.x * SCALE), (long)std::llround(pt.z * SCALE));
+    return p;
+}
+static std::vector<Point> fromClipperPath(const ClipperLib::Path& path) {
+    std::vector<Point> poly; poly.reserve(path.size());
+    const double SCALE = 1e5;
+    for (auto &ip : path)
+        poly.push_back(Point{ ip.X / SCALE, ip.Y / SCALE });
+    return poly;
 }
 
-// Улучшённый findLines: адаптивная заливка по локальному направлению контура каждого полигона
-// Возвращает std::list<Point> с парами точек начала и конца каждого сегмента
+// Смещение одного полигона на delta (отрицательное — внутрь для внешнего)
+static std::vector<Point> offsetPolygon(const std::vector<Point>& input, double delta) {
+    ClipperLib::ClipperOffset co;
+    co.AddPath(toClipperPath(input), ClipperLib::jtMiter, ClipperLib::etClosedPolygon);
+    ClipperLib::Paths sol;
+    const double SCALE = 1e5;
+    co.Execute(sol, delta * SCALE);
+    if (sol.empty()) return {};
+    return fromClipperPath(sol.front());
+}
+
+
+// Основной метод findLines с ротацией
 std::list<Point> Polygons::findLines(double width) {
     std::list<Point> pts;
+    double halfW = width / 2;
+
     for (auto &poly : polygons_) {
         const auto &V = poly.vertices;
         size_t nV = V.size();
         if (nV < 3) continue;
 
-        // 1. Основное направление (упрощённый PCA)
-        double sumX = 0, sumZ = 0;
+        // 1) Вычисляем локальный угол (PCA упрощённо)
+        double sumX = 0, sumZ = 0, totalLen = 0;
         for (size_t i = 0; i + 1 < nV; ++i) {
-            sumX += V[i+1].x - V[i].x;
-            sumZ += V[i+1].z - V[i].z;
+            double dx = V[i+1].x - V[i].x;
+            double dz = V[i+1].z - V[i].z;
+            double len = std::hypot(dx, dz);
+            if (len < EPS) continue;
+            sumX += dx / len;
+            sumZ += dz / len;
+            totalLen += 1;
         }
+        if (totalLen < EPS) continue;
         double theta = std::atan2(sumZ, sumX);
         double cth = std::cos(-theta), sth = std::sin(-theta);
 
-        // 2. Ротация контура относительно локальной оси
+        // 2) Ротация исходного полигона
         std::vector<Point> RV(nV);
         for (size_t i = 0; i < nV; ++i) {
             double x = V[i].x, z = V[i].z;
@@ -196,56 +201,46 @@ std::list<Point> Polygons::findLines(double width) {
             RV[i].z = x * sth + z * cth;
         }
 
-        // 3. Границы по RV.z
+        // 3) Смещение RV
+        double delta = poly.outer ? -halfW : halfW;
+        auto SHR = offsetPolygon(RV, delta);
+        if (SHR.size() < 3) continue;
+
+        // 4) Сканирование по уровням RV.z
         double minZ = 1e18, maxZ = -1e18;
-        for (auto &p : RV) {
+        for (auto &p : SHR) {
             minZ = std::min(minZ, p.z);
             maxZ = std::max(maxZ, p.z);
         }
         size_t levels = static_cast<size_t>(std::ceil((maxZ - minZ) / width));
-
-        // 4. Сканирование уровней для заливки
         for (size_t lvl = 0; lvl < levels; ++lvl) {
             double scanZ = minZ + (lvl + 0.5) * width;
-            std::vector<double> L, R;
-            for (size_t i = 0; i + 1 < nV; ++i) {
-                auto &A = RV[i], &B = RV[i+1];
+            std::vector<double> Xs;
+            for (size_t i = 0; i < SHR.size(); ++i) {
+                auto &A = SHR[i];
+                auto &B = SHR[(i+1)%SHR.size()];
                 if (std::abs(B.z - A.z) < EPS) continue;
                 if (scanZ < std::min(A.z, B.z) || scanZ > std::max(A.z, B.z)) continue;
                 double t = (scanZ - A.z) / (B.z - A.z);
-                double xi = A.x + t * (B.x - A.x);
-                double offset = poly.outer ? -width / 2 : width / 2;
-                double xl = xi + offset;
-                double xr = xi - offset;
-                if (xl < xr) {
-                    L.push_back(xl);
-                    R.push_back(xr);
-                } else {
-                    L.push_back(xr);
-                    R.push_back(xl);
-                }
+                Xs.push_back(A.x + t * (B.x - A.x));
             }
-            if (L.size() != R.size()) continue;
-            std::sort(L.begin(), L.end());
-            std::sort(R.begin(), R.end());
-            // Добавляем пары точек в список
-            for (size_t j = 0; j < L.size(); ++j) {
-                double l = L[j], r = R[j];
-                if (r - l >= 2 * width) {
-                    Point p1{ l * cth + scanZ * sth, -l * sth + scanZ * cth };
-                    Point p2{ r * cth + scanZ * sth, -r * sth + scanZ * cth };
-                    pts.push_back(p1);
-                    pts.push_back(p2);
-                } else {
-                    double mid = 0.5 * (l + r);
-                    Point pm{ mid * cth + scanZ * sth, -mid * sth + scanZ * cth };
-                    pts.push_back(pm);
-                }
+            if (Xs.size() < 2) continue;
+            std::sort(Xs.begin(), Xs.end());
+            // пары
+            for (size_t j = 0; j + 1 < Xs.size(); j += 2) {
+                double x1 = Xs[j], x2 = Xs[j+1];
+                if (x2 <= x1) continue;
+                // получаем точки в оригинальных координатах (обратная ротация)
+                Point P1{ x1 * cth + scanZ * sth, -x1 * sth + scanZ * cth };
+                Point P2{ x2 * cth + scanZ * sth, -x2 * sth + scanZ * cth };
+                pts.push_back(P1);
+                pts.push_back(P2);
             }
         }
     }
     return pts;
 }
+
 
 
 double Polygons::xIntersect(double z,  Point a, Point b) {
