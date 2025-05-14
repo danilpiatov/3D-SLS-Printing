@@ -7,6 +7,7 @@
 #include "Polygons.h"
 #include "clipper.hpp"
 
+
 Polygons::Polygons():
 polygons_({})
 {}
@@ -143,14 +144,14 @@ static constexpr double EPS = 1e-9;
 /// Преобразования Point <-> Clipper
 static ClipperLib::Path toClipperPath(const std::vector<Point>& poly) {
     ClipperLib::Path p; p.reserve(poly.size());
-    const double SCALE = 1e5;
+    const double SCALE = 1e9;
     for (auto &pt : poly)
         p.emplace_back((long)std::llround(pt.x * SCALE), (long)std::llround(pt.z * SCALE));
     return p;
 }
 static std::vector<Point> fromClipperPath(const ClipperLib::Path& path) {
     std::vector<Point> poly; poly.reserve(path.size());
-    const double SCALE = 1e5;
+    const double SCALE = 1e9;
     for (auto &ip : path)
         poly.push_back(Point{ ip.X / SCALE, ip.Y / SCALE });
     return poly;
@@ -161,28 +162,63 @@ static std::vector<Point> offsetPolygon(const std::vector<Point>& input, double 
     ClipperLib::ClipperOffset co;
     co.AddPath(toClipperPath(input), ClipperLib::jtMiter, ClipperLib::etClosedPolygon);
     ClipperLib::Paths sol;
-    const double SCALE = 1e5;
+    const double SCALE = 1e9;
     co.Execute(sol, delta * SCALE);
     if (sol.empty()) return {};
     return fromClipperPath(sol.front());
 }
 
+bool isPointInPolygon(const Point &pt, const std::vector<Point> &poly) {
+    bool inside = false;
+    size_t n = poly.size();
+    for (size_t i = 0, j = n - 1; i < n; j = i++) {
+        const Point &A = poly[i], &B = poly[j];
+        if ((A.z > pt.z) != (B.z > pt.z)) {
+            double x = (B.x - A.x) * (pt.z - A.z) / (B.z - A.z + 1e-9) + A.x;
+            if (pt.x < x) inside = !inside;
+        }
+    }
+    return inside;
+}
+bool isPolygonInside(const std::vector<Point> &inner, const std::vector<Point> &outer) {
+    int hits = 0;
+    for (const auto &p : inner) {
+        if (isPointInPolygon(p, outer)) ++hits;
+    }
+    return hits > inner.size() / 2;
+}
 
-// Основной метод findLines с ротацией
 std::list<Point> Polygons::findLines(double width) {
     std::list<Point> pts;
-    double halfW = width / 2;
+    const double EPS = 1e-9;
 
-    for (auto &poly : polygons_) {
-        const auto &V = poly.vertices;
-        size_t nV = V.size();
-        if (nV < 3) continue;
+    // Вложенность по чётности (0 - остров, 1 - дыра, 2 - остров внутри дыры и т.д.)
+    std::vector<std::tuple<std::vector<Point>, int>> polygonLevels;
 
-        // 1) Вычисляем локальный угол (PCA упрощённо)
+    for (size_t i = 0; i < polygons_.size(); ++i) {
+        const auto& A = polygons_[i];
+        int level = 0;
+        for (size_t j = 0; j < polygons_.size(); ++j) {
+            if (i == j) continue;
+            const auto& B = polygons_[j];
+            int inside = 0;
+            for (auto& p : A.vertices)
+                if (isPointInPolygon(p, B.vertices)) inside++;
+            if (inside > A.vertices.size() / 2)
+                level++;
+        }
+        polygonLevels.emplace_back(A.vertices, level);
+    }
+
+    // Обработка только островов
+    for (auto &[vertices, level] : polygonLevels) {
+        if (level % 2 != 0) continue; // это дыра
+
+        // 1. Применяем PCA только к этому острову
         double sumX = 0, sumZ = 0, totalLen = 0;
-        for (size_t i = 0; i + 1 < nV; ++i) {
-            double dx = V[i+1].x - V[i].x;
-            double dz = V[i+1].z - V[i].z;
+        for (size_t i = 0; i + 1 < vertices.size(); ++i) {
+            double dx = vertices[i+1].x - vertices[i].x;
+            double dz = vertices[i+1].z - vertices[i].z;
             double len = std::hypot(dx, dz);
             if (len < EPS) continue;
             sumX += dx / len;
@@ -193,44 +229,63 @@ std::list<Point> Polygons::findLines(double width) {
         double theta = std::atan2(sumZ, sumX);
         double cth = std::cos(-theta), sth = std::sin(-theta);
 
-        // 2) Ротация исходного полигона
-        std::vector<Point> RV(nV);
-        for (size_t i = 0; i < nV; ++i) {
-            double x = V[i].x, z = V[i].z;
-            RV[i].x = x * cth - z * sth;
-            RV[i].z = x * sth + z * cth;
+        // 2. Собираем все вложенные дырки (следующий нечётный уровень)
+        std::vector<std::vector<Point>> holes;
+        for (auto &[v2, lvl2] : polygonLevels) {
+            if (lvl2 == level + 1 && isPolygonInside(v2, vertices)) {
+                holes.push_back(v2);
+            }
         }
 
-        // 3) Смещение RV
-        double delta = poly.outer ? -halfW : halfW;
-        auto SHR = offsetPolygon(RV, delta);
-        if (SHR.size() < 3) continue;
+        // 3. Преобразование в RV и построение allRings
+        auto transform = [&](const std::vector<Point> &in) -> std::vector<Point> {
+            std::vector<Point> out;
+            for (auto &p : in) {
+                double rx = p.x * cth - p.z * sth;
+                double rz = p.x * sth + p.z * cth;
+                out.push_back({rx, rz});
+            }
+            return out;
+        };
 
-        // 4) Сканирование по уровням RV.z
+        std::vector<std::vector<Point>> allRings;
+        allRings.push_back(transform(vertices));
+        for (auto &hole : holes)
+            allRings.push_back(transform(hole));
+
+        // 4. Поиск min/max Z
         double minZ = 1e18, maxZ = -1e18;
-        for (auto &p : SHR) {
-            minZ = std::min(minZ, p.z);
-            maxZ = std::max(maxZ, p.z);
+        for (auto &ring : allRings) {
+            for (auto &p : ring) {
+                minZ = std::min(minZ, p.z);
+                maxZ = std::max(maxZ, p.z);
+            }
         }
+
         size_t levels = static_cast<size_t>(std::ceil((maxZ - minZ) / width));
         for (size_t lvl = 0; lvl < levels; ++lvl) {
             double scanZ = minZ + (lvl + 0.5) * width;
             std::vector<double> Xs;
-            for (size_t i = 0; i < SHR.size(); ++i) {
-                auto &A = SHR[i];
-                auto &B = SHR[(i+1)%SHR.size()];
-                if (std::abs(B.z - A.z) < EPS) continue;
-                if (scanZ < std::min(A.z, B.z) || scanZ > std::max(A.z, B.z)) continue;
-                double t = (scanZ - A.z) / (B.z - A.z);
-                Xs.push_back(A.x + t * (B.x - A.x));
+
+            for (const auto &ring : allRings) {
+                size_t sz = ring.size();
+                for (size_t i = 0; i < sz; ++i) {
+                    auto &A = ring[i];
+                    auto &B = ring[(i + 1) % sz];
+                    if (std::abs(B.z - A.z) < EPS) continue;
+                    if (scanZ < std::min(A.z, B.z) || scanZ > std::max(A.z, B.z)) continue;
+                    double t = (scanZ - A.z) / (B.z - A.z);
+                    double x = A.x + t * (B.x - A.x);
+                    Xs.push_back(x);
+                }
             }
-            if (Xs.size() < 2) continue;
+
             std::sort(Xs.begin(), Xs.end());
-            // пары
             for (size_t j = 0; j + 1 < Xs.size(); j += 2) {
-                double x1 = Xs[j], x2 = Xs[j+1];
+                double x1 = Xs[j] + width/2;
+                double x2 = Xs[j + 1] - width/2;
                 if (x2 <= x1) continue;
-                // получаем точки в оригинальных координатах (обратная ротация)
+
                 Point P1{ x1 * cth + scanZ * sth, -x1 * sth + scanZ * cth };
                 Point P2{ x2 * cth + scanZ * sth, -x2 * sth + scanZ * cth };
                 pts.push_back(P1);
@@ -238,8 +293,11 @@ std::list<Point> Polygons::findLines(double width) {
             }
         }
     }
+
     return pts;
 }
+
+
 
 
 
