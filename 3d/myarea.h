@@ -2,42 +2,34 @@
 // Created by dan on 2/14/23.
 //
 
-#ifndef INC_3D_MYAREA_H
-#define INC_3D_MYAREA_H
+#ifndef MYAREA_H
+#define MYAREA_H
 
+#include <QWidget>
 #include <vector>
-#include <gtkmm/drawingarea.h>
 #include "Polygons.h"
 #include "Obj3DModel.h"
 
-class MyArea : public Gtk::DrawingArea {
+class MyArea : public QWidget
+{
+    Q_OBJECT
 
 public:
-    void create(Polygons & polygons, Point & startPoint, double laserWidth, double width, double height, Point center);
-    void change(Polygons & polygons);
-    void prev(Polygons & polygons);
+    explicit MyArea(QWidget *parent = nullptr);
+    void create(Polygons &polygons, Point &startPoint, double laserWidth, double width, double height, Point center);
+    void change(Polygons &polygons);
+    void prev(Polygons &polygons);
     void coefPlus();
     void coefMinus();
-    void moveLeft() {
-        center_.x--;
-    }
+    void moveLeft() { center_.x--; }
     void setRealLW();
-
-    void moveRight(){
-        center_.x++;
-    }
-    void moveUp(){
-        center_.z++;
-    }
-    void moveDown(){
-        center_.z--;
-    }
+    void moveRight() { center_.x++; }
+    void moveUp() { center_.z++; }
+    void moveDown() { center_.z--; }
 
 protected:
+    void paintEvent(QPaintEvent *event) override;
 
-    //Override default signal handler:
-
-    virtual bool on_draw(const Cairo::RefPtr<Cairo::Context>& cr);
 private:
     Polygons polygons_;
     double width_ = 0;
@@ -51,5 +43,4 @@ private:
     Point center_ = {0,0};
 };
 
-
-#endif //INC_3D_MYAREA_H
+#endif // MYAREA_H

@@ -1,117 +1,117 @@
-//
-// Created by dan on 5/13/23.
-//
-
 #include "SliceWindow.h"
+#include <QFrame>
+#include <QKeyEvent>
 
-SliceWindow::SliceWindow() :
-        hBoxMain(false, 10),
-        labelScale("Scale"),
-        labelModelPath("Path to model"),
-        entryModelPath(),
-        labelSliceNum("Slice num"),
-        entrySliceNum(),
-        labelLaserWidth("Laser width"),
-        entryLaserWidth(),
-        labelStartPointX("Start point"),
-        buttonStart("Start"),
-        buttonNext("Next"),
-        buttonPrev("Prev"),
-        buttonPlus("+"),
-        buttonMinus("-")
-        {
-    set_title("SLS 3D printing app");
-    set_border_width(0);
-    add(hBoxMain);
-    hBoxMain.pack_start(vBoxOptions, Gtk::PACK_SHRINK, 10);
-    vBoxOptions.set_halign(Gtk::ALIGN_END);
-    hBoxMain.add(vBoxArea);
-    vBoxOptions.pack_start(labelModelPath, Gtk::PACK_SHRINK, 10);
-    vBoxOptions.pack_start(entryModelPath, Gtk::PACK_SHRINK, 10);
-    vBoxOptions.pack_start(*new Gtk::HSeparator(), Gtk::PACK_SHRINK);
-    vBoxOptions.pack_start(labelSliceNum, Gtk::PACK_SHRINK, 10);
-    vBoxOptions.pack_start(entrySliceNum, Gtk::PACK_SHRINK, 10);
-    vBoxOptions.pack_start(*new Gtk::HSeparator(), Gtk::PACK_SHRINK);
-    vBoxOptions.pack_start(labelLaserWidth, Gtk::PACK_SHRINK, 10);
-    vBoxOptions.pack_start(entryLaserWidth, Gtk::PACK_SHRINK, 10);
-    vBoxOptions.pack_start(*new Gtk::HSeparator(), Gtk::PACK_SHRINK);
-    vBoxOptions.pack_start(labelStartPointX, Gtk::PACK_SHRINK, 10);
-    entryStartPointX.set_width_chars(7);
-    entryStartPointY.set_width_chars(7);
-    startPointBox.pack_start(entryStartPointX, Gtk::PACK_EXPAND_WIDGET, 10);
-    startPointBox.pack_start(entryStartPointY, Gtk::PACK_EXPAND_WIDGET, 10);
-    vBoxOptions.pack_start(startPointBox, Gtk::PACK_SHRINK, 10);
-    vBoxOptions.pack_start(*new Gtk::HSeparator(), Gtk::PACK_SHRINK);
-    vBoxOptions.pack_start(buttonStart, Gtk::PACK_SHRINK, 10);
-    vBoxOptions.pack_start(*new Gtk::HSeparator(), Gtk::PACK_SHRINK,2);
-    vBoxOptions.pack_start(*new Gtk::HSeparator(), Gtk::PACK_SHRINK,2);
-    vBoxOptions.pack_start(*new Gtk::HSeparator(), Gtk::PACK_SHRINK,2);
-    prevNextBox.pack_start(buttonPrev, Gtk::PACK_EXPAND_WIDGET, 10);
-    prevNextBox.pack_start(buttonNext, Gtk::PACK_EXPAND_WIDGET, 10);
-    vBoxOptions.pack_start(prevNextBox, Gtk::PACK_SHRINK, 10);
-    vBoxOptions.pack_start(*new Gtk::HSeparator(), Gtk::PACK_SHRINK);
-    vBoxOptions.pack_start(labelScale, Gtk::PACK_SHRINK, 10);
-    scaleBox.pack_start(buttonMinus, Gtk::PACK_EXPAND_WIDGET, 10);
-    scaleBox.pack_start(buttonPlus, Gtk::PACK_EXPAND_WIDGET, 10);
-    vBoxOptions.pack_start(scaleBox, Gtk::PACK_SHRINK, 10);
-    vBoxOptions.pack_start(*new Gtk::HSeparator(), Gtk::PACK_SHRINK);
-    laserSizeButton.set_label("Show real laser size");
-    vBoxOptions.pack_start(laserSizeButton, Gtk::PACK_SHRINK, 10 );
-// Make the button the default widget
-    buttonStart.set_can_default();
-    buttonStart.grab_default();
-// Connect the clicked signal of the button to
-// LoginWindow::on_button_start_clicked()
-    buttonStart.signal_clicked().connect(sigc::mem_fun(*this,
-                                                       &SliceWindow::on_button_start_clicked));
+SliceWindow::SliceWindow() : QMainWindow()
+{
+    setWindowTitle("SLS 3D printing app");
 
-    buttonPrev.set_can_default();
-    buttonPrev.grab_default();
-// Connect the clicked signal of the button to
-    buttonPrev.signal_clicked().connect(sigc::mem_fun(*this,
-                                                      &SliceWindow::on_button_prev_clicked));
+    // Create central widget and main layout
+    centralWidget = new QWidget(this);
+    setCentralWidget(centralWidget);
+    hBoxMain = new QHBoxLayout(centralWidget);
 
-    buttonNext.set_can_default();
-    buttonNext.grab_default();
-// Connect the clicked signal of the button to
-    buttonNext.signal_clicked().connect(sigc::mem_fun(*this,
-                                                      &SliceWindow::on_button_next_clicked));
+    // Create area widget and its layout
+    vBoxArea = new QVBoxLayout();
+    area = new MyArea();
+    vBoxArea->addWidget(area);
 
-    buttonPlus.set_can_default();
-    buttonPlus.grab_default();
-// Connect the clicked signal of the button to
-    buttonPlus.signal_clicked().connect(sigc::mem_fun(*this,
-                                                      &SliceWindow::on_button_plus_clicked));
+    // Create options panel
+    vBoxOptions = new QVBoxLayout();
 
-    buttonMinus.set_can_default();
-    buttonMinus.grab_default();
-// Connect the clicked signal of the button to
-    buttonMinus.signal_clicked().connect(sigc::mem_fun(*this,
-                                                      &SliceWindow::on_button_minus_clicked));
+    // Model path
+    labelModelPath = new QLabel("Path to model");
+    entryModelPath = new QLineEdit();
+    vBoxOptions->addWidget(labelModelPath);
+    vBoxOptions->addWidget(entryModelPath);
+    vBoxOptions->addWidget(new QFrame()); // Separator
 
-    laserSizeButton.set_can_default();
-    laserSizeButton.grab_default();
-    laserSizeButton.signal_clicked().connect(sigc::mem_fun(*this,
-                                                           &SliceWindow::on_button_laser_width_clicked));
+    // Slice number
+    labelSliceNum = new QLabel("Slice num");
+    entrySliceNum = new QLineEdit();
+    vBoxOptions->addWidget(labelSliceNum);
+    vBoxOptions->addWidget(entrySliceNum);
+    vBoxOptions->addWidget(new QFrame()); // Separator
 
-    areaEventBox.add(area);
-    vBoxArea.pack_start(areaEventBox, Gtk::PACK_EXPAND_WIDGET);
+    // Laser width
+    labelLaserWidth = new QLabel("Laser width");
+    entryLaserWidth = new QLineEdit();
+    vBoxOptions->addWidget(labelLaserWidth);
+    vBoxOptions->addWidget(entryLaserWidth);
+    vBoxOptions->addWidget(new QFrame()); // Separator
 
-    add_events(Gdk::KEY_PRESS_MASK);
-// Show all children of the window
-    show_all_children();
+    // Start point
+    labelStartPointX = new QLabel("Start point");
+    entryStartPointX = new QLineEdit();
+    entryStartPointX->setFixedWidth(70);
+    entryStartPointY = new QLineEdit();
+    entryStartPointY->setFixedWidth(70);
+    startPointBox = new QHBoxLayout();
+    startPointBox->addWidget(entryStartPointX);
+    startPointBox->addWidget(entryStartPointY);
+    vBoxOptions->addWidget(labelStartPointX);
+    vBoxOptions->addLayout(startPointBox);
+    vBoxOptions->addWidget(new QFrame()); // Separator
+
+    // Start button
+    buttonStart = new QPushButton("Start");
+    vBoxOptions->addWidget(buttonStart);
+    vBoxOptions->addWidget(new QFrame()); // Separator
+
+    // Prev/Next buttons
+    buttonPrev = new QPushButton("Prev");
+    buttonNext = new QPushButton("Next");
+    prevNextBox = new QHBoxLayout();
+    prevNextBox->addWidget(buttonPrev);
+    prevNextBox->addWidget(buttonNext);
+    vBoxOptions->addLayout(prevNextBox);
+    vBoxOptions->addWidget(new QFrame()); // Separator
+
+    // Scale controls
+    labelScale = new QLabel("Scale");
+    buttonMinus = new QPushButton("-");
+    buttonPlus = new QPushButton("+");
+    scaleBox = new QHBoxLayout();
+    scaleBox->addWidget(buttonMinus);
+    scaleBox->addWidget(buttonPlus);
+    vBoxOptions->addWidget(labelScale);
+    vBoxOptions->addLayout(scaleBox);
+    vBoxOptions->addWidget(new QFrame()); // Separator
+
+    // Laser size checkbox
+    laserSizeButton = new QCheckBox("Show real laser size");
+    vBoxOptions->addWidget(laserSizeButton);
+
+    // Add stretch to push everything up
+    vBoxOptions->addStretch();
+
+    // Connect signals
+    connect(buttonStart, &QPushButton::clicked, this, &SliceWindow::on_button_start_clicked);
+    connect(buttonPrev, &QPushButton::clicked, this, &SliceWindow::on_button_prev_clicked);
+    connect(buttonNext, &QPushButton::clicked, this, &SliceWindow::on_button_next_clicked);
+    connect(buttonPlus, &QPushButton::clicked, this, &SliceWindow::on_button_plus_clicked);
+    connect(buttonMinus, &QPushButton::clicked, this, &SliceWindow::on_button_minus_clicked);
+    connect(laserSizeButton, &QCheckBox::clicked, this, &SliceWindow::on_button_laser_width_clicked);
+
+    // Add layouts to main layout
+    hBoxMain->addLayout(vBoxOptions);
+    hBoxMain->addLayout(vBoxArea, 1); // Give more space to the drawing area
+}
+
+SliceWindow::~SliceWindow()
+{
 }
 
 void SliceWindow::on_button_start_clicked() {
     polygons_.clear();
 
     curNum_ = 0;
-    std::string path = entryModelPath.get_text();
+    std::string path = entryModelPath->text().toStdString();
 
-    int sliceNum = std::stoi(entrySliceNum.get_text().c_str());
-    double laserWidth = std::stod(entryLaserWidth.get_text());
-    double startX = std::stod(entryStartPointX.get_text());
-    double startY = std::stod(entryStartPointY.get_text());
+    int sliceNum = std::stoi(entrySliceNum->text().toStdString());
+    double laserWidth = std::stod(entryLaserWidth->text().toStdString());
+    double startX = std::stod(entryStartPointX->text().toStdString());
+    double startY = std::stod(entryStartPointY->text().toStdString());
     model_.parse(path.c_str());
     h_ = model_.findHighestPoint();
     l_ = model_.findLowestPoint();
@@ -126,7 +126,7 @@ void SliceWindow::on_button_start_clicked() {
     while(maxNum_ >= 0 && polygons_[maxNum_].getPolygons().empty()) {
         maxNum_--;
     }
-    while(curNum_ < maxNum_ &&polygons_[curNum_].getPolygons().empty()) {
+    while(curNum_ < maxNum_ && polygons_[curNum_].getPolygons().empty()) {
         curNum_++;
     }
     minNum_ = curNum_;
@@ -137,87 +137,60 @@ void SliceWindow::on_button_start_clicked() {
         double x = model_.findLeftPoint() + width/2;
         double y = model_.findFarPoint() + height/2;
 
-        area.create(polygons_[curNum_], startPoint, laserWidth, width, height, {x,y});
+        area->create(polygons_[curNum_], startPoint, laserWidth, width, height, {x,y});
     }
-    queue_draw();
-    show_all_children();
-}
-
-SliceWindow::~SliceWindow() {
+    area->update();
 }
 
 void SliceWindow::on_button_prev_clicked() {
     if(curNum_ > minNum_) {
         curNum_--;
-        area.prev(polygons_[curNum_]);
-        queue_draw();
-        show_all_children();
+        area->prev(polygons_[curNum_]);
+        area->update();
     }
 }
 
 void SliceWindow::on_button_next_clicked() {
     if(curNum_ < maxNum_) {
         curNum_++;
-        area.change(polygons_[curNum_]);
-        queue_draw();
-        show_all_children();
+        area->change(polygons_[curNum_]);
+        area->update();
     }
 }
 
 void SliceWindow::on_button_plus_clicked() {
-    area.coefPlus();
-    queue_draw();
-    show_all_children();
-
+    area->coefPlus();
+    area->update();
 }
 
 void SliceWindow::on_button_minus_clicked() {
-    area.coefMinus();
-    queue_draw();
-    show_all_children();
-
+    area->coefMinus();
+    area->update();
 }
 
-bool SliceWindow::on_key_press_event(GdkEventKey* key_event)
+void SliceWindow::keyPressEvent(QKeyEvent *event)
 {
-    //GDK_MOD1_MASK -> the 'alt' key(mask)
-    //GDK_KEY_1 -> the '1' key
-    //GDK_KEY_2 -> the '2' key
-
-    //select the first radio button, when we press alt + 1
-    if(key_event->keyval == GDK_KEY_Left)
-    {
-        area.moveLeft();
-        //returning true, cancels the propagation of the event
-      //  return false;
+    switch(event->key()) {
+        case Qt::Key_Left:
+            area->moveLeft();
+            break;
+        case Qt::Key_Right:
+            area->moveRight();
+            break;
+        case Qt::Key_Up:
+            area->moveUp();
+            break;
+        case Qt::Key_Down:
+            area->moveDown();
+            break;
+        default:
+            QMainWindow::keyPressEvent(event);
+            return;
     }
-    else if(key_event->keyval == GDK_KEY_Right)
-    {
-        area.moveRight();
-        //returning true, cancels the propagation of the event
-        //return true;
-    }
-    else if(key_event->keyval == GDK_KEY_Up )
-    {
-        area.moveUp();
-        //returning true, cancels the propagation of the event
-        //return true;
-    }
-    else if(key_event->keyval == GDK_KEY_Down )
-    {
-        area.moveDown();
-        //returning true, cancels the propagation of the event
-       // return true;
-    }
-    queue_draw();
-    show_all_children();
-    //if the event has not been handled, call the base class
-    return Gtk::Window::on_key_press_event(key_event);
+    area->update();
 }
 
 void SliceWindow::on_button_laser_width_clicked() {
-    area.setRealLW();
-    queue_draw();
-    show_all_children();
+    area->setRealLW();
+    area->update();
 }
-

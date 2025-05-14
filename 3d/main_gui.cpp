@@ -17,28 +17,15 @@
 #include "myarea.h"
 //#include "loginWindow.h"
 #include "SliceWindow.h"
-#include "Polygons.h"
+#include <QApplication>
 
-using namespace std;
+int main(int argc, char *argv[])
+{
+    QApplication app(argc, argv);
 
-int main(int argc, char* argv[]) {
-   try {
-
-
-    std::cout <<"hello";
-    Gtk::Main kit(argc, argv);
     SliceWindow window;
-    window.set_default_size(1500,900);
+    window.resize(800, 600);
+    window.show();
 
-       auto app = Gtk::Application::create("danilpiatov");
-
-       Gtk::Main::run(window);
-       
-    }
-    catch (const std::exception& e) {
-       std::cerr << "Error: " << e.what() << std::endl;
-   }
-
-
-    return 0;
+    return app.exec();
 }

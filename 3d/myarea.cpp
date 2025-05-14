@@ -1,56 +1,68 @@
 #include "myarea.h"
-#include <cairomm/context.h>
+#include <QPainter>
+#include <QPainterPath>
 
-bool MyArea::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
-    Gtk::Allocation allocation = get_allocation();
-    const int width = allocation.get_width();
-    const int height = allocation.get_height();
-
-    // координаты центра окна
-    int xc, yc;
-    xc = width / 2;
-    yc = height / 2;
-
-    cr->set_line_width(1.0);
-
-    double r = 0, g = 1, b = 0;
-    cr->set_source_rgb(r, g, b);
-   for (polygon polygon: polygons_.getPolygons()) {
-        cr->move_to(xc + coef_ * (polygon.vertices.front().x - center_.x), yc - coef_ * (polygon.vertices.front().z - center_.z));
-        for (auto vertex: polygon.vertices) {
-            cr->line_to(xc + coef_ * (vertex.x - center_.x), yc - coef_ * (vertex.z - center_.z));
-        }
-        cr->stroke();
-    }
-
-    cr->set_source_rgb(0, 0, 0);
-    double lineWidth = realLaserWidth_ ? coef_ * laserWidth_ : 1;
-    cr->set_line_width(lineWidth);
-    cr->set_line_cap(Cairo::LINE_CAP_ROUND);
-    std::cout << "start";
-    if(polygons_.getPolygons().size() > 0) {
-        bool line = false;
-        cr->move_to(xc + coef_ * (startPoints_[curLayer_].x - center_.x), yc - coef_ * (startPoints_[curLayer_].z - center_.z));
-        for (Point p: route_) {
-            if (line) {
-                cr->set_line_width(lineWidth);
-                cr->set_source_rgb(0, 0, 0);
-            } else {
-                cr->set_line_width(1);
-                cr->set_source_rgb(1, 0, 0);
-            }
-            cr->line_to(xc + coef_ * (p.x - center_.x), yc - coef_ * (p.z - center_.z));
-            line = !line;
-            cr->stroke();
-            cr->move_to(xc + coef_ * (p.x - center_.x), yc - coef_ * (p.z - center_.z));
-        }
-    }
-
-    cr->stroke();
-    return true;
+MyArea::MyArea(QWidget *parent) : QWidget(parent)
+{
 }
 
-void MyArea::create(Polygons &polygons, Point & startPoint, double laserWidth, double width, double height, Point center) {
+void MyArea::paintEvent(QPaintEvent *event)
+{
+    Q_UNUSED(event);
+
+    QPainter painter(this);
+    painter.setRenderHint(QPainter::Antialiasing);
+
+    const int width = this->width();
+    const int height = this->height();
+
+    // координаты центра окна
+    int xc = width / 2;
+    int yc = height / 2;
+
+    painter.setPen(QPen(QColor(0, 255, 0), 1.0));
+
+    for (polygon polygon : polygons_.getPolygons()) {
+        QPainterPath path;
+        path.moveTo(xc + coef_ * (polygon.vertices.front().x - center_.x),
+                    yc - coef_ * (polygon.vertices.front().z - center_.z));
+        for (auto vertex : polygon.vertices) {
+            path.lineTo(xc + coef_ * (vertex.x - center_.x),
+                        yc - coef_ * (vertex.z - center_.z));
+        }
+        painter.drawPath(path);
+    }
+
+    double lineWidth = realLaserWidth_ ? coef_ * laserWidth_ : 1;
+    QPen pen;
+    pen.setCapStyle(Qt::RoundCap);
+
+    if(polygons_.getPolygons().size() > 0) {
+        bool line = false;
+        QPointF lastPoint(xc + coef_ * (startPoints_[curLayer_].x - center_.x),
+                          yc - coef_ * (startPoints_[curLayer_].z - center_.z));
+
+        for (Point p : route_) {
+            if (line) {
+                pen.setWidthF(lineWidth);
+                pen.setColor(Qt::black);
+            } else {
+                pen.setWidthF(1);
+                pen.setColor(Qt::red);
+            }
+            painter.setPen(pen);
+
+            QPointF currentPoint(xc + coef_ * (p.x - center_.x),
+                                 yc - coef_ * (p.z - center_.z));
+            painter.drawLine(lastPoint, currentPoint);
+
+            line = !line;
+            lastPoint = currentPoint;
+        }
+    }
+}
+
+void MyArea::create(Polygons &polygons, Point &startPoint, double laserWidth, double width, double height, Point center) {
     laserWidth_ = laserWidth;
     startPoints_.clear();
     startPoints_.push_back(startPoint);
@@ -60,9 +72,6 @@ void MyArea::create(Polygons &polygons, Point & startPoint, double laserWidth, d
     center_ = center;
     if(!polygons.getPolygons().empty()) {
         polygons_ = polygons;
-        Gtk::Allocation allocation = get_allocation();
-        const int width = allocation.get_width();
-        const int height = allocation.get_height();
         coef_ = std::min((width - 10) / width_, (height - 10) / height_);
         route_ = polygons_.findRoute(laserWidth_, startPoints_[0]);
     }
@@ -101,4 +110,3 @@ void MyArea::coefMinus() {
 void MyArea::setRealLW() {
     realLaserWidth_ = !realLaserWidth_;
 }
-
