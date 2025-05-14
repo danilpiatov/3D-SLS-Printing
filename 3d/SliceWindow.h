@@ -12,6 +12,8 @@
 #include <QCheckBox>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
+#include <QGroupBox>
+#include <QToolButton>
 #include "myarea.h"
 
 class SliceWindow : public QMainWindow
@@ -26,7 +28,8 @@ protected:
     void keyPressEvent(QKeyEvent *event) override;
 
 private slots:
-            void on_button_start_clicked();
+    void browseModelFile();
+    void on_button_start_clicked();
     void on_button_prev_clicked();
     void on_button_next_clicked();
     void on_button_plus_clicked();
@@ -39,6 +42,12 @@ private:
     QHBoxLayout *hBoxMain;
     QVBoxLayout *vBoxArea;
     QVBoxLayout *vBoxOptions;
+
+    QGroupBox *modelGroup;
+    QGroupBox *sliceControlGroup;
+    QGroupBox *navigationGroup;
+    QGroupBox *laserGroup;
+
     QHBoxLayout *startPointBox;
     QHBoxLayout *prevNextBox;
     QHBoxLayout *scaleBox;

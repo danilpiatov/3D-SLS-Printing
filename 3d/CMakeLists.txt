@@ -9,6 +9,7 @@ find_package(Qt5 REQUIRED COMPONENTS Widgets)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
+qt_add_resources(RESOURCES icons.qrc)
 
 #[[
     pkg_check_modules(GTKMM gtkmm-3.0)
@@ -23,7 +24,7 @@ set(CMAKE_AUTOUIC ON)
 
     include_directories(${GTKMM_INCLUDE_DIRS})
     link_directories(${GTKMM_LIBRARY_DIRS})
-    add_executable(3d main_gui.cpp Obj3DModel.cpp Obj3DModel.h Primitives.h myarea.cpp myarea.h stlParser.cpp Polygons.cpp Polygons.h SliceWindow.cpp SliceWindow.h clipper.cpp clipper.hpp )
+    add_executable(3d main_gui.cpp Obj3DModel.cpp Obj3DModel.h Primitives.h myarea.cpp myarea.h stlParser.cpp Polygons.cpp Polygons.h SliceWindow.cpp SliceWindow.h clipper.cpp clipper.hpp ${RESOURCES} )
 target_link_libraries(${CMAKE_PROJECT_NAME} Qt5::Widgets)
 
 #[[

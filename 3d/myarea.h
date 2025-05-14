@@ -6,6 +6,8 @@
 #define MYAREA_H
 
 #include <QWidget>
+#include <QWheelEvent>
+#include <QMouseEvent>
 #include <vector>
 #include "Polygons.h"
 #include "Obj3DModel.h"
@@ -29,8 +31,16 @@ public:
 
 protected:
     void paintEvent(QPaintEvent *event) override;
+    void wheelEvent(QWheelEvent *event) override;
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseMoveEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
 
 private:
+    QPoint lastDragPos;
+    bool isDragging = false;
+    double baseCoef = 1.0;
+    QPointF viewOffset {0, 0};
     Polygons polygons_;
     double width_ = 0;
     double height_ = 0;

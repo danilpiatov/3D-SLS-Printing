@@ -1,86 +1,108 @@
 #include "SliceWindow.h"
 #include <QFrame>
 #include <QKeyEvent>
+#include <QIntValidator>
+#include <QApplication>
+#include <QFileDialog>
 
 SliceWindow::SliceWindow() : QMainWindow()
 {
-    setWindowTitle("SLS 3D printing app");
+    setWindowTitle("SLS 3D Printing Suite");
+    setMinimumSize(1280, 720);
+
+    // Стилизация приложения
+    QFile styleFile(":/resources/modern.qss");
+    styleFile.open(QFile::ReadOnly);
+    QString style(styleFile.readAll());
+    qApp->setStyleSheet(style);
 
     // Create central widget and main layout
     centralWidget = new QWidget(this);
     setCentralWidget(centralWidget);
     hBoxMain = new QHBoxLayout(centralWidget);
+    hBoxMain->setContentsMargins(12, 12, 12, 12);
+    hBoxMain->setSpacing(20);
 
     // Create area widget and its layout
     vBoxArea = new QVBoxLayout();
     area = new MyArea();
+    area->setMinimumSize(800, 600);
     vBoxArea->addWidget(area);
 
     // Create options panel
     vBoxOptions = new QVBoxLayout();
+    vBoxOptions->setSpacing(15);
 
-    // Model path
-    labelModelPath = new QLabel("Path to model");
+    // Model Settings Group
+    modelGroup = new QGroupBox("Model Settings");
+    QVBoxLayout *modelLayout = new QVBoxLayout(modelGroup);
+    modelLayout->setContentsMargins(10, 15, 10, 10);
+    modelLayout->setSpacing(8);
+
+    labelModelPath = new QLabel("Model File Path");
     entryModelPath = new QLineEdit();
-    vBoxOptions->addWidget(labelModelPath);
-    vBoxOptions->addWidget(entryModelPath);
-    vBoxOptions->addWidget(new QFrame()); // Separator
+    entryModelPath->setPlaceholderText("Enter path to model...");
+    modelLayout->addWidget(labelModelPath);
+    modelLayout->addWidget(entryModelPath);
+    vBoxOptions->addWidget(modelGroup);
 
-    // Slice number
-    labelSliceNum = new QLabel("Slice num");
+    // Slice Control Group
+    sliceControlGroup = new QGroupBox("Slice Parameters");
+    QGridLayout *sliceGrid = new QGridLayout(sliceControlGroup);
+    sliceGrid->setContentsMargins(10, 15, 10, 10);
+    sliceGrid->setHorizontalSpacing(15);
+    sliceGrid->setVerticalSpacing(10);
+
+    labelSliceNum = new QLabel("Layers:");
     entrySliceNum = new QLineEdit();
-    vBoxOptions->addWidget(labelSliceNum);
-    vBoxOptions->addWidget(entrySliceNum);
-    vBoxOptions->addWidget(new QFrame()); // Separator
+    entrySliceNum->setValidator(new QIntValidator(1, 1000, this));
 
-    // Laser width
-    labelLaserWidth = new QLabel("Laser width");
+    labelLaserWidth = new QLabel("Laser Width:");
     entryLaserWidth = new QLineEdit();
-    vBoxOptions->addWidget(labelLaserWidth);
-    vBoxOptions->addWidget(entryLaserWidth);
-    vBoxOptions->addWidget(new QFrame()); // Separator
+    entryLaserWidth->setValidator(new QDoubleValidator(0.01, 10.0, 2, this));
 
-    // Start point
-    labelStartPointX = new QLabel("Start point");
+    labelStartPointX = new QLabel("Start Point (X/Y):");
     entryStartPointX = new QLineEdit();
-    entryStartPointX->setFixedWidth(70);
+    entryStartPointX->setValidator(new QDoubleValidator(this));
     entryStartPointY = new QLineEdit();
-    entryStartPointY->setFixedWidth(70);
-    startPointBox = new QHBoxLayout();
-    startPointBox->addWidget(entryStartPointX);
-    startPointBox->addWidget(entryStartPointY);
-    vBoxOptions->addWidget(labelStartPointX);
-    vBoxOptions->addLayout(startPointBox);
-    vBoxOptions->addWidget(new QFrame()); // Separator
+    entryStartPointY->setValidator(new QDoubleValidator(this));
 
-    // Start button
-    buttonStart = new QPushButton("Start");
-    vBoxOptions->addWidget(buttonStart);
-    vBoxOptions->addWidget(new QFrame()); // Separator
+    sliceGrid->addWidget(labelSliceNum, 0, 0);
+    sliceGrid->addWidget(entrySliceNum, 0, 1);
+    sliceGrid->addWidget(labelLaserWidth, 1, 0);
+    sliceGrid->addWidget(entryLaserWidth, 1, 1);
+    sliceGrid->addWidget(labelStartPointX, 2, 0, 1, 2);
+    QHBoxLayout *startPointLayout = new QHBoxLayout();
+    startPointLayout->addWidget(entryStartPointX);
+    startPointLayout->addWidget(entryStartPointY);
+    sliceGrid->addLayout(startPointLayout, 3, 0, 1, 2);
 
-    // Prev/Next buttons
-    buttonPrev = new QPushButton("Prev");
-    buttonNext = new QPushButton("Next");
-    prevNextBox = new QHBoxLayout();
-    prevNextBox->addWidget(buttonPrev);
-    prevNextBox->addWidget(buttonNext);
-    vBoxOptions->addLayout(prevNextBox);
-    vBoxOptions->addWidget(new QFrame()); // Separator
+    buttonStart = new QPushButton(QIcon(":/resources/start.svg"), "Process Model");
+    sliceGrid->addWidget(buttonStart, 4, 0, 1, 2);
+    vBoxOptions->addWidget(sliceControlGroup);
 
-    // Scale controls
-    labelScale = new QLabel("Scale");
-    buttonMinus = new QPushButton("-");
-    buttonPlus = new QPushButton("+");
-    scaleBox = new QHBoxLayout();
-    scaleBox->addWidget(buttonMinus);
-    scaleBox->addWidget(buttonPlus);
-    vBoxOptions->addWidget(labelScale);
-    vBoxOptions->addLayout(scaleBox);
-    vBoxOptions->addWidget(new QFrame()); // Separator
+    // Navigation Group
+    navigationGroup = new QGroupBox("Navigation");
+    QGridLayout *navGrid = new QGridLayout(navigationGroup);
+    navGrid->setContentsMargins(10, 15, 10, 10);
+    navGrid->setSpacing(10);
 
-    // Laser size checkbox
-    laserSizeButton = new QCheckBox("Show real laser size");
-    vBoxOptions->addWidget(laserSizeButton);
+    buttonPrev = new QPushButton(QIcon(":/resources/prev.svg"), "");
+    buttonNext = new QPushButton(QIcon(":/resources/next.svg"), "");
+    buttonPlus = new QPushButton(QIcon(":/resources/zoom-in.svg"), "");
+    buttonMinus = new QPushButton(QIcon(":/resources/zoom-out.svg"), "");
+
+
+    QLabel *scaleLabel = new QLabel("Zoom:");
+    navGrid->addWidget(buttonPrev, 0, 0);
+    navGrid->addWidget(buttonNext, 0, 1);
+    navGrid->addWidget(scaleLabel, 1, 0);
+    navGrid->addWidget(buttonMinus, 1, 1);
+    navGrid->addWidget(buttonPlus, 1, 2);
+
+    laserSizeButton = new QCheckBox("Real Laser Size");
+    navGrid->addWidget(laserSizeButton, 2, 0, 1, 3);
+    vBoxOptions->addWidget(navigationGroup);
 
     // Add stretch to push everything up
     vBoxOptions->addStretch();
@@ -94,12 +116,44 @@ SliceWindow::SliceWindow() : QMainWindow()
     connect(laserSizeButton, &QCheckBox::clicked, this, &SliceWindow::on_button_laser_width_clicked);
 
     // Add layouts to main layout
-    hBoxMain->addLayout(vBoxOptions);
-    hBoxMain->addLayout(vBoxArea, 1); // Give more space to the drawing area
+    hBoxMain->addLayout(vBoxOptions, 0);
+    hBoxMain->addLayout(vBoxArea, 1);
+
+    QHBoxLayout *pathLayout = new QHBoxLayout();
+    QToolButton *browseButton = new QToolButton();
+    browseButton->setIcon(QIcon(":/resources/folder.svg"));
+    browseButton->setToolTip("Browse model file");
+    connect(browseButton, &QToolButton::clicked, this, &SliceWindow::browseModelFile);
+    pathLayout->addWidget(entryModelPath);
+    pathLayout->addWidget(browseButton);
+    vBoxOptions->addLayout(pathLayout);
+
+    entrySliceNum->setValidator(new QIntValidator(1, 10000, this));
+    entryLaserWidth->setValidator(new QDoubleValidator(0.01, 10.0, 2, this));
+    entryStartPointX->setValidator(new QDoubleValidator(this));
+    entryStartPointY->setValidator(new QDoubleValidator(this));
+
+// Добавим подсказки
+    entryModelPath->setToolTip("Path to 3D model file\nSupported formats: STL, OBJ, 3MF");
+    buttonStart->setToolTip("Start slicing process (Ctrl+Enter)");
+
+
 }
 
 SliceWindow::~SliceWindow()
 {
+}
+
+void SliceWindow::browseModelFile()
+{
+    QString path = QFileDialog::getOpenFileName(this,
+                                                "Select 3D Model",
+                                                QDir::homePath(),
+                                                "3D Files (*.stl *.obj *.3mf)");
+
+    if(!path.isEmpty()) {
+        entryModelPath->setText(path);
+    }
 }
 
 void SliceWindow::on_button_start_clicked() {
