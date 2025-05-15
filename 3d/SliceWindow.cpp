@@ -89,16 +89,13 @@ SliceWindow::SliceWindow() : QMainWindow()
 
     buttonPrev = new QPushButton(QIcon(":/resources/prev.svg"), "");
     buttonNext = new QPushButton(QIcon(":/resources/next.svg"), "");
-    buttonPlus = new QPushButton(QIcon(":/resources/zoom-in.svg"), "");
-    buttonMinus = new QPushButton(QIcon(":/resources/zoom-out.svg"), "");
 
 
-    QLabel *scaleLabel = new QLabel("Zoom:");
-    navGrid->addWidget(buttonPrev, 0, 0);
-    navGrid->addWidget(buttonNext, 0, 1);
-    navGrid->addWidget(scaleLabel, 1, 0);
-    navGrid->addWidget(buttonMinus, 1, 1);
-    navGrid->addWidget(buttonPlus, 1, 2);
+    QLabel *scaleLabel = new QLabel("Layers:");
+    navGrid->addWidget(scaleLabel, 0, 0);
+    navGrid->addWidget(buttonPrev, 0, 1);
+    navGrid->addWidget(buttonNext, 0, 2);
+
 
     laserSizeButton = new QCheckBox("Real Laser Size");
     navGrid->addWidget(laserSizeButton, 2, 0, 1, 3);
@@ -111,8 +108,6 @@ SliceWindow::SliceWindow() : QMainWindow()
     connect(buttonStart, &QPushButton::clicked, this, &SliceWindow::on_button_start_clicked);
     connect(buttonPrev, &QPushButton::clicked, this, &SliceWindow::on_button_prev_clicked);
     connect(buttonNext, &QPushButton::clicked, this, &SliceWindow::on_button_next_clicked);
-    connect(buttonPlus, &QPushButton::clicked, this, &SliceWindow::on_button_plus_clicked);
-    connect(buttonMinus, &QPushButton::clicked, this, &SliceWindow::on_button_minus_clicked);
     connect(laserSizeButton, &QCheckBox::clicked, this, &SliceWindow::on_button_laser_width_clicked);
 
     // Add layouts to main layout
@@ -191,7 +186,7 @@ void SliceWindow::on_button_start_clicked() {
         double x = model_.findLeftPoint() + width/2;
         double y = model_.findFarPoint() + height/2;
 
-        area->create(polygons_[curNum_], startPoint, laserWidth, width, height, {x,y});
+        area->create(polygons_[curNum_], startPoint, laserWidth, area->width(), area->height(), {x,y});
     }
     area->update();
 }

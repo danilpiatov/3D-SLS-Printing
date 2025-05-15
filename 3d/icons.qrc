@@ -4,6 +4,7 @@
         <file alias="folder.svg">resources/folder.svg</file>
         <file alias="zoom-in.svg">resources/zoom-in.svg</file>
         <file alias="prev.svg">resources/prev.svg</file>
+        <file alias="next.svg">resources/next.svg</file>
         <file>modern.qss</file>
     </qresource>
 </RCC>

@@ -66,8 +66,6 @@ private:
     QPushButton *buttonStart;
     QPushButton *buttonNext;
     QPushButton *buttonPrev;
-    QPushButton *buttonPlus;
-    QPushButton *buttonMinus;
     QCheckBox *laserSizeButton;
     MyArea *area;
 

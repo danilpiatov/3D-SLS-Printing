@@ -33,6 +33,20 @@ QPushButton:hover {
     color: #1a1b38;
 }
 
+QToolButton {
+    background-color: #b2928d;
+    color: #1a1b38;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    min-width: 80px;
+}
+
+QToolButton:hover {
+    background-color: #82645e;
+    color: #1a1b38;
+}
+
 QPushButton:disabled {
     background-color: #26547C;
     color: #26547C;
