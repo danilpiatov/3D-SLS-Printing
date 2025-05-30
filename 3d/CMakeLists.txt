@@ -1,16 +1,10 @@
 cmake_minimum_required(VERSION 3.24)
-if (USE_AUTH)
 project(3d)
-endif ()
 set(CMAKE_CXX_STANDARD 17)
 find_package(PkgConfig)
 
 if(USE_GUI OR USE_AUTH)
-    find_package(Qt5 REQUIRED COMPONENTS Widgets)
-endif ()
-
-if(USE_AUTH)
-    find_package(Qt5 COMPONENTS Sql REQUIRED)
+    find_package(Qt5 REQUIRED COMPONENTS Widgets Sql)
 endif ()
 
 if(USE_GUI OR USE_AUTH)
