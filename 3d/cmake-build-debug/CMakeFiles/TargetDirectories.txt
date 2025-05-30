@@ -1,0 +1,5 @@
+/home/d/3d/3D-SLS-Printing/3d/cmake-build-debug/CMakeFiles/3d.dir
+/home/d/3d/3D-SLS-Printing/3d/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/d/3d/3D-SLS-Printing/3d/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/home/d/3d/3D-SLS-Printing/3d/cmake-build-debug/CMakeFiles/3d_autogen_timestamp_deps.dir
+/home/d/3d/3D-SLS-Printing/3d/cmake-build-debug/CMakeFiles/3d_autogen.dir

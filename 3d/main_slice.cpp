@@ -14,7 +14,7 @@
 #include <fcntl.h>
 #include <fstream>
 
-#include "Obj3DModel.h"
+#include "ModelSlicer.h"
 #include "Polygons.h"
 
 using namespace std;
@@ -26,7 +26,7 @@ int main(int argc, char* argv[]) {
        std::string path;
        std::cout << "Type path to stl file\n";
        std::cin >> path;
-       Obj3DModel model;
+       ModelSlicer model;
        model.parse(path.c_str());
        std::cout << "Type slice height\n";
        double height;

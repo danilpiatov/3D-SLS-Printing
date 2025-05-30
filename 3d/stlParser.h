@@ -27,9 +27,9 @@ namespace stl {
         std::vector<Triangle> triangles;
     };
 
-    stlFile parseSTL(const std::string& path);
+    stlFile parseModel(const std::string& path);
 
-    vertex parseVec(std::ifstream & file);
+    vertex parseVertex(std::ifstream & file);
 }
 
 #endif //STL_PARSER_H

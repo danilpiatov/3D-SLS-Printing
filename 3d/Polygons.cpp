@@ -65,10 +65,10 @@ void Polygons::polygonize(std::vector<Line> &lines, int startLineIndex) {
             break;
         }
     }
-    p.uEdge = 0;
-    p.rEdge = maxRight;
-    p.lEdge = maxLeft;
-    p.dEdge = maxDown;
+    p.upper = 0;
+    p.right = maxRight;
+    p.left = maxLeft;
+    p.down = maxDown;
 
     if(p.vertices.size() > 2)
         polygons_.emplace_back(p);
@@ -116,26 +116,26 @@ void Polygons::isOuter(polygon & polygon) {
         }
 
         for (size_t j = 0; j < polygons_[i].vertices.size() - 1; ++j){
-            if (polygon.vertices[polygon.uEdge].x < std::max(polygons_[i].vertices[j].x, polygons_[i].vertices[j + 1].x) &&
-                polygon.vertices[polygon.uEdge].z > std::min(polygons_[i].vertices[j].z, polygons_[i].vertices[j + 1].z) &&
-                polygon.vertices[polygon.uEdge].z < std::max(polygons_[i].vertices[j].z, polygons_[i].vertices[j + 1].z) &&
-                xIntersect(polygon.vertices[polygon.uEdge].x,polygons_[i].vertices[j], polygons_[i].vertices[j  + 1] )
-                > polygon.vertices[polygon.uEdge].x){
+            if (polygon.vertices[polygon.upper].x < std::max(polygons_[i].vertices[j].x, polygons_[i].vertices[j + 1].x) &&
+                polygon.vertices[polygon.upper].z > std::min(polygons_[i].vertices[j].z, polygons_[i].vertices[j + 1].z) &&
+                polygon.vertices[polygon.upper].z < std::max(polygons_[i].vertices[j].z, polygons_[i].vertices[j + 1].z) &&
+                xIntersect(polygon.vertices[polygon.upper].x,polygons_[i].vertices[j], polygons_[i].vertices[j  + 1] )
+                > polygon.vertices[polygon.upper].x){
                 out = !out;
             }
         }
         if (!out){
-            if(polygons_[i].outer) {
-                polygon.outer = false;
+            if(polygons_[i].isOuter) {
+                polygon.isOuter = false;
                 return;
             }
             else{
-                polygon.outer = true;
+                polygon.isOuter = true;
                 return;
             }
         }
     }
-    polygon.outer = true;
+    polygon.isOuter = true;
     return;
 }
 
@@ -369,57 +369,5 @@ void Polygons::polygonizeAll(std::vector<Line> &lines) {
     for (polygon &p : polygons_) {
         isOuter(p);
     }
-}
-
-double Polygons::getWidth() {
-    if(polygons_.empty()) {
-        return 1;
-    }
-    double left = polygons_[0].vertices[polygons_[0].lEdge].x;
-    double right = polygons_[0].vertices[polygons_[0].rEdge].x;
-    for(size_t i = 1; i < polygons_.size();++i){
-        if(polygons_[i].vertices[polygons_[i].lEdge].x < left){
-            left = polygons_[i].vertices[polygons_[i].lEdge].x;
-        }
-        if(polygons_[i].vertices[polygons_[i].rEdge].x > right){
-            right = polygons_[i].vertices[polygons_[i].rEdge].x;
-        }
-    }
-    return right - left;
-}
-
-double Polygons::getHeight() {
-    if(polygons_.empty()) {
-        return 1;
-    }
-    double up = polygons_[0].vertices[polygons_[0].uEdge].z;
-    double down = polygons_[0].vertices[polygons_[0].dEdge].z;
-    for(size_t i = 1; i < polygons_.size();++i){
-        if(polygons_[i].vertices[polygons_[i].dEdge].z < down){
-            down = polygons_[i].vertices[polygons_[i].dEdge].z;
-        }
-        if(polygons_[i].vertices[polygons_[i].uEdge].z > up){
-            up = polygons_[i].vertices[polygons_[i].uEdge].z;
-        }
-    }
-    return up - down;
-}
-
-Point Polygons::getCenter() {
-    if(polygons_.empty()) {
-        return {0,0};
-    }
-    double left = polygons_[0].vertices[polygons_[0].lEdge].x;
-    double down = polygons_[0].vertices[polygons_[0].dEdge].z;
-    for(size_t i = 1; i < polygons_.size();++i){
-        if(polygons_[i].vertices[polygons_[i].dEdge].z < down){
-            down = polygons_[i].vertices[polygons_[i].dEdge].z;
-        }
-        if(polygons_[i].vertices[polygons_[i].lEdge].x < left){
-            left = polygons_[i].vertices[polygons_[i].lEdge].x;
-        }
-    }
-    Point point = {left + this->getWidth()/2, down + this->getHeight()/2};
-    return point;
 }
 

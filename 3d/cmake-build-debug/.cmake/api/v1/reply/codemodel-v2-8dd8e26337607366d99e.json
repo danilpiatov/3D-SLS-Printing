@@ -1,0 +1,78 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"jsonFile" : "directory-.-Debug-f5ebdc15457944623624.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.24"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "3d",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "3d::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-3d-Debug-1ec9e4d7f3b7522d8c85.json",
+					"name" : "3d",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "3d_autogen::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-3d_autogen-Debug-355438c15b1addc0a848.json",
+					"name" : "3d_autogen",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "3d_autogen_timestamp_deps::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-3d_autogen_timestamp_deps-Debug-8afa6598089d50ae7733.json",
+					"name" : "3d_autogen_timestamp_deps",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/home/d/3d/3D-SLS-Printing/3d/cmake-build-debug",
+		"source" : "/home/d/3d/3D-SLS-Printing/3d"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 7
+	}
+}

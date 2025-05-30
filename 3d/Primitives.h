@@ -23,12 +23,12 @@ struct vertex{
 };
 
 struct polygon{
-    bool outer = false;
+    bool isOuter = false;
     std::vector<Point> vertices = {};
-    int rEdge;
-    int lEdge;
-    int uEdge;
-    int dEdge;
+    int right;
+    int left;
+    int upper;
+    int down;
 };
 
 #endif //INC_3D_PRIMITIVES_H

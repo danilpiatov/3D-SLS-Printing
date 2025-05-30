@@ -10,7 +10,7 @@
 #include <QMouseEvent>
 #include <vector>
 #include "Polygons.h"
-#include "Obj3DModel.h"
+#include "ModelSlicer.h"
 
 class MyArea : public QWidget
 {
@@ -39,7 +39,6 @@ protected:
 private:
     QPoint lastDragPos;
     bool isDragging = false;
-    double baseCoef = 1.0;
     QPointF viewOffset {0, 0};
     Polygons polygons_;
     double width_ = 0;

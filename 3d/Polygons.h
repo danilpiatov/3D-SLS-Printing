@@ -16,9 +16,6 @@ public:
     Polygons();
     void polygonizeAll(std::vector<Line> & lines);
     std::vector<polygon> getPolygons();
-    double getWidth();
-    double getHeight();
-    Point getCenter();
     std::vector<Point> findRoute(double width, Point & startPoint);
 private:
     std::list<Point> findLines(double width);

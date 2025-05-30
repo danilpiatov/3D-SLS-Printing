@@ -15,13 +15,18 @@
 #include <QGroupBox>
 #include <QToolButton>
 #include "myarea.h"
+#include "userstab.h"
+#include "authmanager.h"
 
 class SliceWindow : public QMainWindow
 {
     Q_OBJECT
 
+
+
 public:
     SliceWindow();
+    SliceWindow(const UserInfo &userInfo, QWidget *parent);
     virtual ~SliceWindow();
 
 protected:
@@ -32,13 +37,11 @@ private slots:
     void on_button_start_clicked();
     void on_button_prev_clicked();
     void on_button_next_clicked();
-    void on_button_plus_clicked();
-    void on_button_minus_clicked();
     void on_button_laser_width_clicked();
 
 private:
     // Widgets
-    QWidget *centralWidget;
+    QWidget *mainContentWidget;
     QHBoxLayout *hBoxMain;
     QVBoxLayout *vBoxArea;
     QVBoxLayout *vBoxOptions;
@@ -76,8 +79,15 @@ private:
     double l_;
     double h_;
     double step_;
-    Obj3DModel model_;
+    ModelSlicer model_;
     std::vector<Polygons> polygons_;
+    // Элементы для админа
+    QTabWidget *adminTabs;
+    UserManagementTab *userManagementTab;
+    QVBoxLayout *mainLayout;
+    void setupMainInterface();
+    void setupAdminInterface();
+    QString currentUserRole;
 };
 
 #endif // SLICEWINDOW_H

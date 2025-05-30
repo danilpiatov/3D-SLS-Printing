@@ -1,14 +1,10 @@
-//
-// Created by Jacob Austin on 5/26/18.
-//
-
 #include "stlParser.h"
 #include <cassert>
 #include <tuple>
 #include <cstring>
 
 namespace stl {
-    vertex parseVec(std::ifstream & file) {
+    vertex parseVertex(std::ifstream & file) {
         char triangle[12];
         file.read(triangle, 12);
         return vertex({*reinterpret_cast<float*>(triangle),
@@ -16,7 +12,7 @@ namespace stl {
                        *reinterpret_cast<float*>(triangle + 8)});
     }
 
-    stlFile parseSTL(const std::string& path) {
+    stlFile parseModel(const std::string& path) {
         std::ifstream file(path.c_str(), std::ios::in | std::ios::binary);
 
         if (!file) {
@@ -35,10 +31,10 @@ namespace stl {
         data.num_triangles = *reinterpret_cast<int*>(num_triangles);
 
         for ( int i = 0; i < data.num_triangles; i++) {
-            std::ignore = parseVec(file);
-            vertex v1 = parseVec(file);
-            vertex v2 = parseVec(file);
-            vertex v3 = parseVec(file);
+            std::ignore = parseVertex(file);
+            vertex v1 = parseVertex(file);
+            vertex v2 = parseVertex(file);
+            vertex v3 = parseVertex(file);
             data.triangles.emplace_back(v1, v2, v3);
 
             char properties[2];

@@ -4,22 +4,16 @@
 #include <QIntValidator>
 #include <QApplication>
 #include <QFileDialog>
+#include <QDebug>
+#include <QScrollArea>
 
-SliceWindow::SliceWindow() : QMainWindow()
+void SliceWindow::setupMainInterface()
 {
-    setWindowTitle("SLS 3D Printing Suite");
-    setMinimumSize(1280, 720);
-
-    // Стилизация приложения
-    QFile styleFile(":/resources/modern.qss");
-    styleFile.open(QFile::ReadOnly);
-    QString style(styleFile.readAll());
-    qApp->setStyleSheet(style);
-
     // Create central widget and main layout
-    centralWidget = new QWidget(this);
-    setCentralWidget(centralWidget);
-    hBoxMain = new QHBoxLayout(centralWidget);
+    mainContentWidget = new QWidget(this);
+    setCentralWidget(mainContentWidget);
+
+    hBoxMain = new QHBoxLayout(mainContentWidget);
     hBoxMain->setContentsMargins(12, 12, 12, 12);
     hBoxMain->setSpacing(20);
 
@@ -43,7 +37,14 @@ SliceWindow::SliceWindow() : QMainWindow()
     entryModelPath = new QLineEdit();
     entryModelPath->setPlaceholderText("Enter path to model...");
     modelLayout->addWidget(labelModelPath);
-    modelLayout->addWidget(entryModelPath);
+    QHBoxLayout *pathLayout = new QHBoxLayout(modelGroup);
+    pathLayout->addWidget(entryModelPath);
+    QToolButton *browseButton = new QToolButton();
+    browseButton->setIcon(QIcon(":/resources/folder.svg"));
+    browseButton->setToolTip("Browse model file");
+    connect(browseButton, &QToolButton::clicked, this, &SliceWindow::browseModelFile);
+    pathLayout->addWidget(browseButton);
+    modelLayout->addLayout(pathLayout);
     vBoxOptions->addWidget(modelGroup);
 
     // Slice Control Group
@@ -114,25 +115,66 @@ SliceWindow::SliceWindow() : QMainWindow()
     hBoxMain->addLayout(vBoxOptions, 0);
     hBoxMain->addLayout(vBoxArea, 1);
 
-    QHBoxLayout *pathLayout = new QHBoxLayout();
-    QToolButton *browseButton = new QToolButton();
-    browseButton->setIcon(QIcon(":/resources/folder.svg"));
-    browseButton->setToolTip("Browse model file");
-    connect(browseButton, &QToolButton::clicked, this, &SliceWindow::browseModelFile);
-    pathLayout->addWidget(entryModelPath);
-    pathLayout->addWidget(browseButton);
-    vBoxOptions->addLayout(pathLayout);
-
     entrySliceNum->setValidator(new QIntValidator(1, 10000, this));
     entryLaserWidth->setValidator(new QDoubleValidator(0.01, 10.0, 2, this));
     entryStartPointX->setValidator(new QDoubleValidator(this));
     entryStartPointY->setValidator(new QDoubleValidator(this));
 
 // Добавим подсказки
-    entryModelPath->setToolTip("Path to 3D model file\nSupported formats: STL, OBJ, 3MF");
+    entryModelPath->setToolTip("Path to 3D model file\nSupported formats: STL");
     buttonStart->setToolTip("Start slicing process (Ctrl+Enter)");
 
+    setCentralWidget(mainContentWidget);
+}
 
+SliceWindow::SliceWindow(const UserInfo &userInfo, QWidget *parent)
+        : QMainWindow(parent), currentUserRole(userInfo.role)
+{
+    // Инициализация основных компонентов
+    setupMainInterface();
+
+    if(currentUserRole == "admin") {
+        qDebug() << "Initializing admin interface";
+        setupAdminInterface();
+    }
+    QFile styleFile(":/resources/modern.qss");
+    styleFile.open(QFile::ReadOnly);
+    QString style(styleFile.readAll());
+    qApp->setStyleSheet(style);
+
+}
+void SliceWindow::setupAdminInterface()
+{
+    // Проверяем текущий центральный виджет
+    QWidget *originalCentral = mainContentWidget;
+
+    // 2. Создаем контейнер вкладок
+    adminTabs = new QTabWidget();
+
+    // 3. Первая вкладка - оригинальный интерфейс
+    QScrollArea *mainTab = new QScrollArea();
+    mainTab->setWidget(originalCentral);
+    mainTab->setWidgetResizable(true);
+
+    // 4. Вторая вкладка - управление пользователями
+    userManagementTab = new UserManagementTab();
+
+    // 5. Настройка вкладок
+    adminTabs->addTab(mainTab, "Main Interface");
+    adminTabs->addTab(userManagementTab, "User Management");
+
+    // 6. Стилизация
+    adminTabs->setStyleSheet(
+            "QTabBar::tab { padding: 10px; min-width: 150px; }"
+            "QTabBar::tab:selected { background: #f0f0f0; }"
+    );
+
+    // 7. Устанавливаем табы как центральный виджет
+    setCentralWidget(adminTabs);
+
+    // 8. Настройка размеров
+    adminTabs->setMinimumSize(1200, 800);
+    qDebug() << "Admin interface initialized";
 }
 
 SliceWindow::~SliceWindow()
@@ -144,7 +186,7 @@ void SliceWindow::browseModelFile()
     QString path = QFileDialog::getOpenFileName(this,
                                                 "Select 3D Model",
                                                 QDir::homePath(),
-                                                "3D Files (*.stl *.obj *.3mf)");
+                                                "3D Files (*.stl)");
 
     if(!path.isEmpty()) {
         entryModelPath->setText(path);
@@ -205,16 +247,6 @@ void SliceWindow::on_button_next_clicked() {
         area->change(polygons_[curNum_]);
         area->update();
     }
-}
-
-void SliceWindow::on_button_plus_clicked() {
-    area->coefPlus();
-    area->update();
-}
-
-void SliceWindow::on_button_minus_clicked() {
-    area->coefMinus();
-    area->update();
 }
 
 void SliceWindow::keyPressEvent(QKeyEvent *event)

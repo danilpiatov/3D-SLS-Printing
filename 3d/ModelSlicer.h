@@ -2,16 +2,16 @@
 // Created by dan on 2/14/23.
 //
 
-#ifndef INC_3D_OBJ3DMODEL_H
-#define INC_3D_OBJ3DMODEL_H
+#ifndef INC_3D_MODELSLICER_H
+#define INC_3D_MODELSLICER_H
 #include <vector>
 #include "Primitives.h"
 #include "stlParser.h"
 
 
-class Obj3DModel {
+class ModelSlicer {
 public:
-    Obj3DModel();
+    ModelSlicer();
     void parse(const char *filename);
     std::vector<Line> slice(double z);
     double findLowestPoint();
@@ -25,4 +25,4 @@ private:
 };
 
 
-#endif //INC_3D_OBJ3DMODEL_H
+#endif //INC_3D_MODELSLICER_H

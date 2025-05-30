@@ -2,7 +2,7 @@
 // Created by dan on 2/14/23.
 //
 
-#include "Obj3DModel.h"
+#include "ModelSlicer.h"
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -20,12 +20,12 @@ Point intersection(const vertex& a, const vertex& b, double z){
     return Point({x ,y});
 }
 
-Obj3DModel::Obj3DModel() :
+ModelSlicer::ModelSlicer() :
   model_( {"", 0, {}})
 {
 }
 
-std::vector<Line> Obj3DModel::slice(double z) {
+std::vector<Line> ModelSlicer::slice(double z) {
     std::vector<Line> lines;
     for (stl::Triangle t: model_.triangles){
         std::vector<double> zs {t.v1.z,
@@ -56,7 +56,7 @@ std::vector<Line> Obj3DModel::slice(double z) {
     return lines;
 }
 
-double Obj3DModel::findLowestPoint() {
+double ModelSlicer::findLowestPoint() {
     double z = model_.triangles[0].v1.y;
     for (stl::Triangle t: model_.triangles) {
         if (t.v1.z < z){
@@ -72,7 +72,7 @@ double Obj3DModel::findLowestPoint() {
     return z;
 }
 
-double Obj3DModel::findHighestPoint() {
+double ModelSlicer::findHighestPoint() {
     double z = model_.triangles[0].v1.y;
     for (stl::Triangle t: model_.triangles) {
         if (t.v1.z > z){
@@ -88,11 +88,11 @@ double Obj3DModel::findHighestPoint() {
     return z;
 }
 
-void Obj3DModel::parse(const char *filename) {
-    model_ = stl::parseSTL(filename);
+void ModelSlicer::parse(const char *filename) {
+    model_ = stl::parseModel(filename);
 }
 
-double Obj3DModel::findLeftPoint() {
+double ModelSlicer::findLeftPoint() {
     double x = model_.triangles[0].v1.x;
     for (stl::Triangle t: model_.triangles) {
         if (t.v1.x < x){
@@ -108,7 +108,7 @@ double Obj3DModel::findLeftPoint() {
     return x;
 }
 
-double Obj3DModel::findRightPoint() {
+double ModelSlicer::findRightPoint() {
     double x = model_.triangles[0].v1.x;
     for (stl::Triangle t: model_.triangles) {
         if (t.v1.x > x){
@@ -124,7 +124,7 @@ double Obj3DModel::findRightPoint() {
     return x;
 }
 
-double Obj3DModel::findClosePoint() {
+double ModelSlicer::findClosePoint() {
     double y = model_.triangles[0].v1.y;
     for (stl::Triangle t: model_.triangles) {
         if (t.v1.y > y){
@@ -140,7 +140,7 @@ double Obj3DModel::findClosePoint() {
     return y;
 }
 
-double Obj3DModel::findFarPoint() {
+double ModelSlicer::findFarPoint() {
     double y = model_.triangles[0].v1.y;
     for (stl::Triangle t: model_.triangles) {
         if (t.v1.y < y){

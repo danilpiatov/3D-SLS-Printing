@@ -1,0 +1,4 @@
+/home/d/Downloads/CLion-2024.3.5/clion-2024.3.5/bin/cmake/linux/x64/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "Unix Makefiles" -S /home/d/3d/3D-SLS-Printing/3d -B /home/d/3d/3D-SLS-Printing/3d/cmake-build-debug
+-- Configuring done (0.0s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/d/3d/3D-SLS-Printing/3d/cmake-build-debug

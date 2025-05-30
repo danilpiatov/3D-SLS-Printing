@@ -1,5 +1,4 @@
 #include "loginWindow.h"
-#include "authmanager.h"
 #include <QVBoxLayout>
 #include <QPushButton>
 #include <QLabel>
@@ -34,9 +33,11 @@ AuthWindow::AuthWindow(QWidget *parent) : QDialog(parent) {
 
 void AuthWindow::tryLogin() {
     AuthManager authManager;
-    if(authManager.authenticate(usernameInput->text(), passwordInput->text())) {
-        accept(); // Закрыть окно с результатом QDialog::Accepted
+    userInfo = authManager.authenticate(usernameInput->text(), passwordInput->text());
+
+    if(userInfo.isAuthenticated) {
+        accept();
     } else {
-        QMessageBox::warning(this, "Ошибка", "Неверный логин или пароль");
+        QMessageBox::warning(this, "Error", "Invalid credentials");
     }
 }
